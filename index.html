@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NAS WATANIA - Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <h1>NAS WATANIA System</h1>
+</div>
+
+<div class="pagewrap">
+  <div class="card" style="max-width:420px; margin:40px auto;">
+    <h3>Login</h3>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Username">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Password">
+    </div>
+
+    <div class="section-actions">
+      <button class="action-btn primary" onclick="login()">Login</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const users = {
+  ahmed: "123",
+  ali: "123",
+  mustafa: "123",
+  noor: "123",
+  abdullah: "123",
+  taif: "123",
+  admin: "admin123"
+};
+
+function login(){
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPass").value.trim();
+
+  if(users[u] && users[u] === p){
+    localStorage.setItem("currentUser", u);
+    window.location.href = "invoice.html";
+  }else{
+    alert("Wrong username or password");
+  }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAS WATANIA - Cash Collection</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <h1>NAS WATANIA Cash Collection</h1>
+  <div class="nav">
+    <a href="invoice.html">Invoices</a>
+    <a href="cash.html">Cash Collection</a>
+    <a href="reports.html">Reports</a>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="pagewrap">
+  <div class="card">
+    <div class="head-badge">Receipt Entry</div>
+    <h3 style="margin-top:0;">Cash Collection</h3>
+
+    <div class="grid">
+      <div class="field">
+        <label>Passenger Name</label>
+        <input id="ccustomer" placeholder="Passenger Name">
+      </div>
+
+      <div class="field">
+        <label>Flight No</label>
+        <input id="cflightNo" placeholder="Flight No">
+      </div>
+
+      <div class="field">
+        <label>Service</label>
+        <select id="cservice">
+          <option value="">Select Service</option>
+          <option>Handling</option>
+          <option>Wheelchair</option>
+          <option>EBT</option>
+          <option>CN.EBT</option>
+          <option>Travel Form</option>
+          <option>Insurance</option>
+          <option>MOPH</option>
+          <option>Other</option>
+          <option>Baggage Delivery</option>
+          <option>CIP</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Currency</label>
+        <select id="ccurrency">
+          <option value="">Select Currency</option>
+          <option>USD</option>
+          <option>IQD</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Type</label>
+        <select id="ctype" onchange="onTypeChange()">
+          <option value="">Select Type</option>
+          <option>Entry</option>
+          <option>Expenses</option>
+          <option>Payment</option>
+          <option>Transfer</option>
+          <option>Reverse</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Company Name</label>
+        <select id="ccompany" onchange="renderApplyInvoices()">
+          <option value="">Select Company</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Amount</label>
+        <input id="camount" type="number" placeholder="0" oninput="recalcApplyTotal()">
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <input id="cnote" placeholder="Description">
+      </div>
+    </div>
+
+    <div class="section-actions">
+      <label><input type="checkbox" id="applyToggle" onchange="toggleApplyBox()"> Apply</label>
+    </div>
+
+    <div id="creverseBox" class="hidden" style="margin-top:8px;">
+      <div class="field">
+        <label>Enter Receipt No to Reverse</label>
+        <input id="creverseOf" placeholder="e.g. 2026020001">
+      </div>
+    </div>
+
+    <div id="applyBox" class="apply-box hidden">
+      <div class="apply-head">
+        <strong>Outstanding Invoices</strong>
+        <div class="apply-total">Selected Total: <span id="selectedApplyTotal">0.00</span></div>
+      </div>
+
+      <table class="apply-table">
+        <thead>
+          <tr>
+            <th>Apply</th>
+            <th>Invoice No</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Outstanding</th>
+            <th>Apply Amount</th>
+          </tr>
+        </thead>
+        <tbody id="applyInvoicesBody"></tbody>
+      </table>
+
+      <p class="muted">For full payment leave Apply Amount as outstanding. For partial payment enter the amount you want to apply.</p>
+    </div>
+
+    <div class="section-actions">
+      <button class="action-btn primary" onclick="saveAndPrepare()">Save + Prepare</button>
+      <button class="action-btn secondary" onclick="newReceipt()">New Receipt</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <h3 style="margin:0 0 8px 0;">Search Receipt</h3>
+    <div class="section-actions">
+      <input id="csearchNo" placeholder="Enter Receipt No" style="flex:1; min-width:220px;">
+      <button class="action-btn secondary" onclick="searchReceipt()">Search</button>
+    </div>
+
+    <div id="cprintArea" class="hidden"></div>
+
+    <div class="hr"></div>
+
+    <h3 style="margin:0 0 8px 0;">Daily Report</h3>
+    <div class="section-actions">
+      <input type="date" id="creportFrom" style="min-width:220px;">
+      <input type="date" id="creportTo" style="min-width:220px;">
+      <button class="action-btn primary" onclick="exportReceiptExcel()">Export Excel (.xlsx)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const currentUser = localStorage.getItem("currentUser") || "";
+if(!currentUser){ window.location.href = "index.html"; }
+
+let receipts = JSON.parse(localStorage.getItem("receipts_v9") || "[]");
+let lastReceiptNo = "";
+let isLastPrinted = true;
+
+function logout(){
+  localStorage.removeItem("currentUser");
+  window.location.href = "index.html";
+}
+
+function getInvoices(){
+  return JSON.parse(localStorage.getItem("ops_invoices") || "[]");
+}
+
+function getReceipts(){
+  return JSON.parse(localStorage.getItem("receipts_v9") || "[]");
+}
+
+function saveReceipts(){
+  localStorage.setItem("receipts_v9", JSON.stringify(receipts));
+}
+
+function getAppliedTotalsMap(){
+  const map = {};
+
+  getReceipts().forEach(r => {
+    if(!Array.isArray(r.appliedInvoices)) return;
+
+    const sign = String(r.type || "").toLowerCase() === "reverse" ? -1 : 1;
+
+    r.appliedInvoices.forEach(a => {
+      const key = String(a.invoiceId || a.invoiceNo || "");
+      const amt = Math.abs(parseFloat(a.appliedAmount || a.amount || 0));
+      if(!key || !amt) return;
+      map[key] = (map[key] || 0) + (sign * amt);
+    });
+  });
+
+  return map;
+}
+
+function getInvoicePaymentInfo(inv, appliedMap){
+  if(inv.isReversal || inv.reversedByInvoiceNo){
+    return {paid:0, outstanding:0, status:"Reversed"};
+  }
+
+  const total = Math.abs(parseFloat(inv.grandTotal || 0));
+  const key = String(inv.id || inv.invoiceNo || "");
+  const paid = Math.max(0, Math.min(total, parseFloat(appliedMap[key] || 0)));
+  const outstanding = Math.max(0, total - paid);
+
+  let status = "Outstanding";
+  if(outstanding < 0.005) status = "Paid";
+  else if(paid > 0) status = "Partially Paid";
+
+  return {paid, outstanding, status};
+}
+
+function loadCashCompanies(){
+  const companies = new Set([
+    "Air Arabia","Fly cham","Egypt Air","Emirates","Fly Dubai","Middle East airline",
+    "Pegasus Airine","QATAR AIRWAYS","Syrian Air","Turkish Airlines","Meraj","Royal Jordanian",
+    "UR","ItlalaAlsharq-YZD","Fly Baghdad","Avia Traffic","Tail wind","Mahan Air","Armenia Air",
+    "Jordan aviation","TABAN AIR","Jet Magic Airline","Klas Jet Airline","RED WINGS","PAKISTAN AIR",
+    "QESHM AIR","Cash Customers","ATA air","Aseman air","Nile Air","ASA","Sama Al Iraq - UT Air",
+    "SAHA Air","Pars Air","Zagros Air","AEROFLOT Airline","Fly Arna","Fly Nas","Flyadeal",
+    "Fly Sepehran","VIP Terminal","Salam Air","ASL Group","Baghdad Lounge","Caspian Air","Farish Air",
+    "ItlalaAlsharq-ARN","freebird","Iran Tour","Air Arabia-Abo Dhabi","A Jet","Gulf Air","Sama terminal",
+    "Global","Simor","AlRawdatain","AlMarbad Company","ItlalaAlsharq-AN","ItlalaAlsharq-QM",
+    "ItlalaAlsharq-SR","Al Jazeera","ItlalaAlsharq-SN","ItlalaAlsharq-MJ","AzerbaijanAirlines",
+    "Akitu Aviation","AlRawdatain-MJ","AlRawdatain-AVA","Oman Air","AlRawdatain-VRS",
+    "ItlalaAlsharq-Kich","Sama Najaf-TBN","Aegean Air","Arab Wings","Spice Jet"
+  ]);
+
+  getInvoices().forEach(i => {
+    if(i.airline) companies.add(i.airline);
+  });
+
+  getReceipts().forEach(r => {
+    if(r.company) companies.add(r.company);
+  });
+
+  const select = document.getElementById("ccompany");
+  const currentValue = select.value;
+  select.innerHTML = '<option value="">Select Company</option>';
+
+  [...companies].sort().forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
+  });
+
+  if(currentValue && [...companies].includes(currentValue)){
+    select.value = currentValue;
+  }
+}
+
+function toggleApplyBox(){
+  const show = document.getElementById("applyToggle").checked && document.getElementById("ctype").value !== "Reverse";
+  document.getElementById("applyBox").classList.toggle("hidden", !show);
+  if(show) renderApplyInvoices();
+}
+
+function onTypeChange(){
+  const typeValue = document.getElementById("ctype").value;
+  const isReverse = typeValue === "Reverse";
+
+  document.getElementById("creverseBox").classList.toggle("hidden", !isReverse);
+  document.getElementById("applyToggle").disabled = isReverse;
+
+  if(isReverse){
+    document.getElementById("applyToggle").checked = false;
+    document.getElementById("applyBox").classList.add("hidden");
+
+    ["ccustomer","cflightNo","cservice","ccurrency","ccompany","camount","cnote"].forEach(id => {
+      const el = document.getElementById(id);
+      el.disabled = true;
+      if(id !== "camount") el.value = "";
+    });
+  }else{
+    ["ccustomer","cflightNo","cservice","ccurrency","ccompany","camount","cnote"].forEach(id => {
+      document.getElementById(id).disabled = false;
+    });
+  }
+
+  if(!isReverse){
+    document.getElementById("creverseOf").value = "";
+  }
+
+  toggleApplyBox();
+}
+
+function generateReceiptNo(){
+  const d = new Date();
+  const prefix = String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, "0");
+  const count = receipts.filter(r => String(r.no || "").startsWith(prefix)).length + 1;
+  return prefix + String(count).padStart(4, "0");
+}
+
+function renderApplyInvoices(){
+  const body = document.getElementById("applyInvoicesBody");
+  if(!body) return;
+  body.innerHTML = "";
+
+  const company = document.getElementById("ccompany").value;
+  if(!company || !document.getElementById("applyToggle").checked){
+    recalcApplyTotal();
+    return;
+  }
+
+  const appliedMap = getAppliedTotalsMap();
+  const invoices = getInvoices().filter(inv => inv.airline === company);
+
+  invoices.forEach(inv => {
+    const info = getInvoicePaymentInfo(inv, appliedMap);
+    if(info.status === "Paid" || inv.isReversal || inv.reversedByInvoiceNo) return;
+
+    const tr = document.createElement("tr");
+    const key = String(inv.id || inv.invoiceNo || "");
+
+    tr.innerHTML = `
+      <td><input type="checkbox" class="apply-check" data-id="${key}" onchange="toggleApplyInvoiceRow(this)"></td>
+      <td>${inv.invoiceNo || ""}</td>
+      <td>${inv.date || ""}</td>
+      <td>${Number(inv.grandTotal || 0).toFixed(2)}</td>
+      <td>${info.paid.toFixed(2)}</td>
+      <td>${info.outstanding.toFixed(2)}</td>
+      <td><input type="number" step="0.01" class="apply-amount" data-id="${key}" data-max="${info.outstanding.toFixed(2)}" value="${info.outstanding.toFixed(2)}" disabled oninput="recalcApplyTotal()"></td>
+    `;
+
+    body.appendChild(tr);
+  });
+
+  recalcApplyTotal();
+}
+
+function toggleApplyInvoiceRow(box){
+  const id = box.getAttribute("data-id");
+  const amountInput = document.querySelector('.apply-amount[data-id="' + id + '"]');
+
+  if(amountInput){
+    amountInput.disabled = !box.checked;
+    if(box.checked && !amountInput.value){
+      amountInput.value = amountInput.getAttribute("data-max") || "0";
+    }
+  }
+
+  recalcApplyTotal();
+}
+
+function recalcApplyTotal(){
+  let total = 0;
+
+  document.querySelectorAll(".apply-check:checked").forEach(box => {
+    const id = box.getAttribute("data-id");
+    const amountInput = document.querySelector('.apply-amount[data-id="' + id + '"]');
+
+    if(amountInput){
+      const max = parseFloat(amountInput.getAttribute("data-max") || "0");
+      let amt = parseFloat(amountInput.value || "0");
+
+      if(amt < 0) amt = 0;
+      if(amt > max) amt = max;
+
+      amountInput.value = amt ? amt.toFixed(2) : "";
+      total += amt;
+    }
+  });
+
+  document.getElementById("selectedApplyTotal").innerText = total.toFixed(2);
+}
+
+function collectAppliedInvoices(){
+  const invoices = getInvoices();
+  const appliedMap = getAppliedTotalsMap();
+  const selected = [];
+
+  document.querySelectorAll(".apply-check:checked").forEach(box => {
+    const id = box.getAttribute("data-id");
+    const amountInput = document.querySelector('.apply-amount[data-id="' + id + '"]');
+    const inv = invoices.find(x => String(x.id || x.invoiceNo || "") === id);
+
+    if(!inv || !amountInput) return;
+
+    const outstanding = getInvoicePaymentInfo(inv, appliedMap).outstanding;
+    const appliedAmount = Math.abs(parseFloat(amountInput.value || "0"));
+    if(appliedAmount <= 0) return;
+
+    selected.push({
+      invoiceId: inv.id,
+      invoiceNo: inv.invoiceNo,
+      invoiceDate: inv.date || "",
+      invoiceTotal: Math.abs(parseFloat(inv.grandTotal || 0)),
+      appliedAmount: appliedAmount,
+      outstandingBefore: outstanding,
+      outstandingAfter: Math.max(0, outstanding - appliedAmount)
+    });
+  });
+
+  return selected;
+}
+
+function validateReceipt(){
+  const typeValue = document.getElementById("ctype").value;
+
+  if(typeValue === "Reverse"){
+    const no = document.getElementById("creverseOf").value.trim();
+    if(!no){
+      alert("Please enter receipt number to reverse");
+      return false;
+    }
+
+    const orig = receipts.find(x => String(x.no) === no);
+    if(!orig){
+      alert("Receipt not found");
+      return false;
+    }
+
+    return true;
+  }
+
+  const required = ["ccustomer","cflightNo","cservice","ccurrency","ctype","ccompany","camount","cnote"];
+  for(const id of required){
+    const el = document.getElementById(id);
+    if(!el.value || !String(el.value).trim()){
+      alert("Please complete data");
+      return false;
+    }
+  }
+
+  if(document.getElementById("applyToggle").checked){
+    const selected = collectAppliedInvoices();
+
+    if(!selected.length){
+      alert("Please select at least one invoice");
+      return false;
+    }
+
+    const selectedTotal = selected.reduce((a,b) => a + b.appliedAmount, 0);
+    const enteredAmount = Math.abs(parseFloat(document.getElementById("camount").value || "0"));
+
+    if(Math.abs(selectedTotal - enteredAmount) > 0.009){
+      alert("Amount not matching selected invoices");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function saveAndPrepare(){
+  receipts = getReceipts();
+
+  if(!validateReceipt()) return;
+
+  const now = new Date();
+  const typeValue = document.getElementById("ctype").value;
+
+  if(typeValue === "Reverse"){
+    const origNo = document.getElementById("creverseOf").value.trim();
+    const original = receipts.find(x => String(x.no) === origNo);
+    if(!original) return alert("Receipt not found");
+
+    const reversedEntry = {
+      no: generateReceiptNo(),
+      emp: currentUser,
+      customer: original.customer,
+      flightNo: original.flightNo || "",
+      service: original.service,
+      currency: original.currency,
+      type: "Reverse",
+      company: original.company,
+      amount: -Math.abs(Number(original.amount || 0)),
+      note: "Reversal of Receipt No: " + origNo,
+      date: now.toISOString().slice(0,10),
+      dateTime: now.toISOString(),
+      reverseOf: origNo,
+      applyInvoices: !!original.applyInvoices,
+      appliedInvoices: Array.isArray(original.appliedInvoices) ? original.appliedInvoices : []
+    };
+
+    receipts.push(reversedEntry);
+    saveReceipts();
+    receipts = getReceipts();
+    lastReceiptNo = reversedEntry.no;
+    isLastPrinted = false;
+    renderPrintArea(reversedEntry);
+    alert("Reverse saved.\nNew Receipt No: " + reversedEntry.no);
+    return;
+  }
+
+  const appliedInvoices = document.getElementById("applyToggle").checked ? collectAppliedInvoices() : [];
+  let amount = Math.abs(parseFloat(document.getElementById("camount").value || "0"));
+
+  if(typeValue === "Expenses" || typeValue === "Payment" || typeValue === "Transfer"){
+    amount = -amount;
+  }
+
+  const r = {
+    no: generateReceiptNo(),
+    emp: currentUser,
+    customer: document.getElementById("ccustomer").value.trim(),
+    flightNo: document.getElementById("cflightNo").value.trim(),
+    service: document.getElementById("cservice").value,
+    currency: document.getElementById("ccurrency").value,
+    type: typeValue,
+    company: document.getElementById("ccompany").value,
+    amount: amount,
+    note: document.getElementById("cnote").value.trim(),
+    date: now.toISOString().slice(0,10),
+    dateTime: now.toISOString(),
+    reverseOf: "",
+    applyInvoices: document.getElementById("applyToggle").checked,
+    appliedInvoices: appliedInvoices
+  };
+
+  receipts.push(r);
+  saveReceipts();
+  receipts = getReceipts();
+  lastReceiptNo = r.no;
+  isLastPrinted = false;
+  renderPrintArea(r);
+  alert("Receipt saved.\nReceipt No: " + r.no + "\nPlease print before creating new receipt.");
+}
+
+function renderPrintArea(r){
+  const title = (String(r.type || "").toLowerCase() === "payment") ? "PAYMENT REQUEST" : "RECEIPT";
+  const dt = String(r.dateTime || "").replace("T"," ").slice(0,19);
+  const reverseRow = (r.type === "Reverse" && r.reverseOf)
+    ? `<div class="pair"><b>Reverse Of</b><span>${r.reverseOf}</span></div>`
+    : "";
+
+  const area = document.getElementById("cprintArea");
+  area.classList.remove("hidden");
+
+  area.innerHTML = `
+    <div class="receipt-box">
+      <div style="text-align:center;margin-bottom:12px;">
+  <img src="nas_logo.png" style="height:150px;">
+</div>
+<h2 style="text-align:center;margin-top:0;">${title}</h2>
+
+      <div class="pair"><b>Receipt No</b><span>${r.no || ""}</span></div>
+      ${reverseRow}
+      <div class="pair"><b>Date</b><span>${dt}</span></div>
+      <div class="pair"><b>Employee</b><span>${r.emp || ""}</span></div>
+      <div class="pair"><b>Passenger</b><span>${r.customer || ""}</span></div>
+      <div class="pair"><b>Flight No</b><span>${r.flightNo || ""}</span></div>
+      <div class="pair"><b>Service</b><span>${r.service || ""}</span></div>
+      <div class="pair"><b>Type</b><span>${r.type || ""}</span></div>
+      <div class="pair"><b>Company</b><span>${r.company || ""}</span></div>
+      <div class="pair"><b>Amount</b><span>${Number(r.amount || 0).toFixed(2)} ${r.currency || ""}</span></div>
+      <div class="pair"><b>Description</b><span>${r.note || ""}</span></div>
+
+      <div class="signrow">
+        <div>Receiver Name</div>
+        <div>Delivered By</div>
+      </div>
+
+      <div class="signrow">
+        <div>Financial Manager</div>
+        <div>General Manager</div>
+      </div>
+
+      <div class="section-actions" style="justify-content:center;">
+        <button class="action-btn primary" onclick="markPrinted()">Print</button>
+      </div>
+    </div>
+  `;
+}
+
+function markPrinted(){
+  isLastPrinted = true;
+
+  const area = document.getElementById("cprintArea");
+  if(!area || !area.innerHTML.trim()){
+    alert("No receipt to print");
+    return;
+  }
+
+  const w = window.open("", "_blank", "width=900,height=700");
+  if(!w){
+    alert("Please allow popups");
+    return;
+  }
+
+  const printHtml = area.innerHTML.replace(/<div class="section-actions"[\s\S]*?<\/div>/g, "");
+
+  w.document.write(`
+    <html>
+    <head>
+      <title>Receipt</title>
+      <style>
+        body{font-family:Arial;padding:20px;color:#111;}
+        .receipt-box{background:#fff;color:#111;border:1px solid #c9d8f5;border-radius:12px;padding:16px;}
+        .pair{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed #ddd;}
+        .pair:last-child{border-bottom:none;}
+        .signrow{display:flex;justify-content:space-between;margin-top:45px;font-weight:700;width:90%;margin-left:auto;margin-right:auto;}
+        .signrow div{width:45%;text-align:center;padding-top:10px;border-top:1px solid #000;}
+        h2{text-align:center;margin-top:0;}
+      </style>
+    </head>
+    <body>
+      ${printHtml}
+    </body>
+    </html>
+  `);
+
+  w.document.close();
+  w.focus();
+
+  setTimeout(() => {
+    w.print();
+    w.close();
+  }, 200);
+}
+
+function newReceipt(){
+  if(lastReceiptNo && !isLastPrinted){
+    alert("Please print before New Receipt.\nReceipt No: " + lastReceiptNo);
+    return;
+  }
+
+  clearReceiptFields();
+  lastReceiptNo = "";
+  isLastPrinted = true;
+}
+
+function clearReceiptFields(){
+  ["ccustomer","cflightNo","cservice","ccurrency","ctype","ccompany","camount","cnote","creverseOf","csearchNo"].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){
+      el.value = "";
+      if(el.tagName === "SELECT") el.selectedIndex = 0;
+    }
+  });
+
+  document.getElementById("applyToggle").checked = false;
+  document.getElementById("applyBox").classList.add("hidden");
+  document.getElementById("applyInvoicesBody").innerHTML = "";
+  document.getElementById("selectedApplyTotal").innerText = "0.00";
+
+  const area = document.getElementById("cprintArea");
+  area.classList.add("hidden");
+  area.innerHTML = "";
+
+  loadCashCompanies();
+  onTypeChange();
+}
+
+function searchReceipt(){
+  receipts = getReceipts();
+
+  const no = document.getElementById("csearchNo").value.trim();
+  if(!no) return alert("Enter Receipt No");
+
+  const r = receipts.find(x => String(x.no) === no);
+  if(!r) return alert("Receipt not found");
+
+  renderPrintArea(r);
+}
+
+function exportReceiptExcel(){
+  receipts = getReceipts();
+
+  const from = document.getElementById("creportFrom").value;
+  const to = document.getElementById("creportTo").value;
+
+  if(!from || !to) return alert("Select date from and to");
+  if(from > to) return alert("Date From cannot be greater than Date To");
+
+  const data = receipts.filter(r => r.date >= from && r.date <= to);
+  if(data.length === 0) return alert("No data");
+
+  const rows = data.map(r => ({
+    "Receipt No": r.no,
+    "Date": r.date || "",
+    "Employee": r.emp || "",
+    "Type": r.type || "",
+    "Reverse Of": (r.type === "Reverse") ? (r.reverseOf || "") : "",
+    "Passenger": r.customer || "",
+    "Flight No": r.flightNo || "",
+    "Service": r.service || "",
+    "Company": r.company || "",
+    "Currency": r.currency || "",
+    "Amount": Number(r.amount || 0).toFixed(2),
+    "Description": r.note || "",
+    "Applied Total": Array.isArray(r.appliedInvoices)
+      ? r.appliedInvoices.reduce((a,b) => a + (parseFloat(b.appliedAmount || 0) || 0), 0).toFixed(2)
+      : "0.00",
+    "DateTime": String(r.dateTime || "").replace("T"," ").slice(0,19)
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Daily Report");
+  XLSX.writeFile(wb, "Daily_Report_" + from + "_to_" + to + ".xlsx");
+}
+
+window.onload = function(){
+  receipts = getReceipts();
+  loadCashCompanies();
+  onTypeChange();
+};
+</script>
+</body>
+</html>

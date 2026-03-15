@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>NAS WATANIA - Invoice</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="prices_tables_corrected.js"></script>
+<link rel="stylesheet" href="style.css"></head><body>
+
+<div id="app"><div class="topbar"><h1>NAS WATANIA Invoice System</h1><div class="nav"><a href="invoice.html">Invoices</a><a href="cash.html">Cash Collection</a><a href="reports.html">Reports</a><button class="logout-btn" onclick="logout()">Logout</button></div></div><div style="padding:0 18px;"><p id="welcomeText" class="muted"></p></div><div class="pagewrap"><div id="invoicePage" class="page active">
+    <div class="card">
+      <div class="head-badge">Invoice No: <span id="invoiceNoPreview"></span></div>
+      <h3>Invoice Header</h3>
+
+      <div class="grid">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="invDate" onchange="refreshInvoiceNoPreview()">
+        </div>
+
+        <div class="field">
+          <label>Invoice No.</label>
+          <input type="text" id="invoiceNo" class="readonly" readonly>
+        </div>
+
+        <div class="field">
+          <label>Airline</label>
+          <select id="airline" onchange="refreshAllServicePrices();onAreaChange()">
+            <option value="">Select</option>
+            <option>Air Arabia</option>
+            <option>Fly cham</option>
+            <option>Egypt Air</option>
+            <option>Emirates</option>
+            <option>Fly Dubai</option>
+            <option>Middle East airline</option>
+            <option>Pegasus Airine</option>
+            <option>QATAR AIRWAYS</option>
+            <option>Syrian Air</option>
+            <option>Turkish Airlines</option>
+            <option>Meraj</option>
+            <option>Royal Jordanian</option>
+            <option>UR</option>
+            <option>ItlalaAlsharq-YZD</option>
+            <option>Fly Baghdad</option>
+            <option>Avia Traffic</option>
+            <option>Tail wind</option>
+            <option>Mahan Air</option>
+            <option>Armenia Air</option>
+            <option>Jordan aviation</option>
+            <option>TABAN AIR</option>
+            <option>Jet Magic Airline</option>
+            <option>Klas Jet Airline</option>
+            <option>RED WINGS</option>
+            <option>PAKISTAN AIR</option>
+            <option>QESHM AIR</option>
+            <option>Cash Customers</option>
+            <option>ATA air</option>
+            <option>Aseman air</option>
+            <option>Nile Air</option>
+            <option>ASA</option>
+            <option>Sama Al Iraq - UT Air</option>
+            <option>SAHA Air</option>
+            <option>Pars Air</option>
+            <option>Zagros Air</option>
+            <option>AEROFLOT Airline</option>
+            <option>Fly Arna</option>
+            <option>Fly Nas</option>
+            <option>Flyadeal</option>
+            <option>Fly Sepehran</option>
+            <option>VIP Terminal</option>
+            <option>Salam Air</option>
+            <option>ASL Group</option>
+            <option>Baghdad Lounge</option>
+            <option>Caspian Air</option>
+            <option>Farish Air</option>
+            <option>ItlalaAlsharq-ARN</option>
+            <option>freebird</option>
+            <option>Iran Tour</option>
+            <option>Air Arabia-Abo Dhabi</option>
+            <option>A Jet</option>
+            <option>Gulf Air</option>
+            <option>Sama terminal</option>
+            <option>Global</option>
+            <option>Simor</option>
+            <option>AlRawdatain</option>
+            <option>AlMarbad Company</option>
+            <option>ItlalaAlsharq-AN</option>
+            <option>ItlalaAlsharq-QM</option>
+            <option>ItlalaAlsharq-SR</option>
+            <option>Al Jazeera</option>
+            <option>ItlalaAlsharq-SN</option>
+            <option>ItlalaAlsharq-MJ</option>
+            <option>AzerbaijanAirlines</option>
+            <option>Akitu Aviation</option>
+            <option>AlRawdatain-MJ</option>
+            <option>AlRawdatain-AVA</option>
+            <option>Oman Air</option>
+            <option>AlRawdatain-VRS</option>
+            <option>ItlalaAlsharq-Kich</option>
+            <option>Sama Najaf-TBN</option>
+            <option>Aegean Air</option>
+            <option>Arab Wings</option>
+            <option>Spice Jet</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Flight No.</label>
+          <input type="text" id="flightNo">
+        </div>
+
+        <div class="field">
+          <label>A/C Reg.</label>
+          <input type="text" id="acReg">
+        </div>
+
+        <div class="field">
+          <label>Flight Type</label>
+          <select id="flightType" onchange="refreshAllServicePrices()">
+            <option value="">Select</option>
+            <option>Schedule</option>
+            <option>Charter</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>OPS</label>
+          <select id="ops" onchange="toggleBaggageFields();refreshAllServicePrices();onAreaChange()">
+            <option value="">Select</option>
+            <option>Turnaround</option>
+            <option>Ferry In</option>
+            <option>EBT</option>
+            <option>Cancle</option>
+            <option>Ferry Out</option>
+            <option>Baggage Delivery</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>MTOW</label>
+          <select id="mtow" onchange="refreshAllServicePrices()">
+            <option value="">Select</option>
+            <option>MTOW up to 25,000 kgs</option>
+            <option>MTOW – From 25,001 to 60,000 kgs</option>
+            <option>MTOW – From 60,001 to 100,000 kgs</option>
+            <option>MTOW – From 100,001 to 200,000 kgs</option>
+            <option>MTOW – From 200,001 to 300,000 kgs</option>
+            <option>Above 300,000 kgs</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>ATA (24H)</label>
+          <input type="text" id="ata" placeholder="HH:MM" maxlength="5" oninput="handleTimeInput(this);calculateArrivalDiff();refreshAllServicePrices();">
+        </div>
+
+        <div class="field">
+          <label>STA (24H)</label>
+          <input type="text" id="sta" placeholder="HH:MM" maxlength="5" oninput="handleTimeInput(this);calculateArrivalDiff();">
+        </div>
+
+        <div class="field">
+          <label>ATD (24H)</label>
+          <input type="text" id="atd" placeholder="HH:MM" maxlength="5" oninput="handleTimeInput(this);calculateDepartureDiff();refreshAllServicePrices();">
+        </div>
+
+        <div class="field">
+          <label>STD (24H)</label>
+          <input type="text" id="std" placeholder="HH:MM" maxlength="5" oninput="handleTimeInput(this);calculateDepartureDiff();">
+        </div>
+
+        <div class="field hidden" id="areaFieldWrap">
+          <label>Area</label>
+          <select id="areaSelect" onchange="onAreaChange()">
+            <option value="">Select Area</option>
+          </select>
+        </div>
+
+        <div class="field hidden" id="kmFieldWrap">
+          <label>KM</label>
+          <input type="text" id="kmValue" class="readonly" readonly>
+        </div>
+
+        <div class="field" style="grid-column:span 2;">
+          <label>Comment</label>
+          <textarea id="comment" placeholder="Write comment here..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Services</h3>
+      <table class="services-table">
+        <thead>
+          <tr>
+            <th style="width:50%">Service</th>
+            <th style="width:15%">QTY</th>
+            <th style="width:15%">Unit Price</th>
+            <th style="width:20%">Total Amount</th>
+          </tr>
+        </thead>
+        <tbody id="servicesBody"></tbody>
+      </table>
+
+      <div class="grand-total-box">
+        <div>
+          <span>Grand Total</span>
+          <span id="grandTotal">0.00</span>
+        </div>
+      </div>
+
+      <div class="section-actions">
+        <button class="action-btn primary" onclick="saveInvoice()">Save Invoice</button>
+        <button class="action-btn ok" onclick="printCurrentInvoice()">Print</button>
+        <button class="action-btn secondary" onclick="exportExcel()">Export Excel</button>
+        <button class="action-btn secondary" onclick="newInvoice()">New Invoice</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Reverse Invoice</h3>
+      <div class="reverse-box">
+        <div class="field">
+          <label>Invoice No. to Reverse</label>
+          <input type="text" id="reverseInvoiceNo" placeholder="Enter invoice no">
+        </div>
+        <button class="action-btn danger" onclick="reverseInvoice()">Reverse</button>
+      </div>
+      <p class="muted">Reverse will create a new invoice with minus values to offset the old invoice.</p>
+    </div>
+
+    <div class="card">
+      <h3>Saved Invoices</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Invoice No.</th>
+            <th>Date</th>
+            <th>Airline</th>
+            <th>OPS</th>
+            <th>Grand Total</th>
+            <th>Created By</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceList"></tbody>
+      </table>
+    </div>
+  </div>
+
+  </div></div>
+<script>
+const users = {
+  ahmed: "123",
+  ali: "123",
+  mustafa: "123",
+  noor: "123",
+  abdullah: "123",
+  taif: "123",
+  admin: "admin123"
+};
+
+let currentUser = localStorage.getItem("currentUser") || "";
+let editingInvoiceId = null;
+
+const services = [
+  "Basic handling",
+  "Baggage Delivery",
+  "Excess Baggage",
+  "CUPPS Service",
+  "DCS Service",
+  "WHCHN",
+  "BRS NB",
+  "BRS WB",
+  "VIP",
+  "VIP system",
+  "VIP assistance (MAAS)",
+  "Travel Form",
+  "Insurance",
+  "Manual PNL",
+  "Load sheet",
+  "Flight creation",
+  "Seat Map",
+  "Station Management",
+  "Cancel/Overflies in short notif.",
+  "other",
+  "Delay Above 60 minute up to 4 Hours",
+  "Delay Above 4 Hours",
+  "Delay Above 8 Hours",
+  "service between 22:00 to 06:00"
+];
+
+const delayServices = [
+  "Delay Above 60 minute up to 4 Hours",
+  "Delay Above 4 Hours",
+  "Delay Above 8 Hours"
+];
+const servicePercentageTable = {
+  "Air Arabia": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Fly cham": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Egypt Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Emirates": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Fly Dubai": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Middle East airline": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Pegasus Airine": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "QATAR AIRWAYS": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Syrian Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Turkish Airlines": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Meraj": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Royal Jordanian": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "UR": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "ItlalaAlsharq-YZD": {
+    "Delay Above 60 minute up to 4 Hours": 0.20,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Fly Baghdad": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Avia Traffic": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Tail wind": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Mahan Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Armenia Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Jordan aviation": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "TABAN AIR": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Jet Magic Airline": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Klas Jet Airline": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "RED WINGS": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "PAKISTAN AIR": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "QESHM AIR": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Cash Customers": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "ATA air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Aseman air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Nile Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "ASA": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Sama Al Iraq - UT Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "SAHA Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Pars Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Zagros Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "AEROFLOT Airline": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Fly Arna": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Fly Nas": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Flyadeal": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Fly Sepehran": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "VIP Terminal": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Salam Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "ASL Group": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Baghdad Lounge": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Caspian Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Farish Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "ItlalaAlsharq-ARN": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "freebird": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Iran Tour": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Air Arabia-Abo Dhabi": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "A Jet": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Gulf Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Sama terminal": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Global": {
+    "Delay Above 60 minute up to 4 Hours": 0.20,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "Simor": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "AlRawdatain": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "AlMarbad Company": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "ItlalaAlsharq-AN": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "ItlalaAlsharq-QM": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "ItlalaAlsharq-SR": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Al Jazeera": {
+    "Delay Above 60 minute up to 4 Hours": 0.30,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "ItlalaAlsharq-SN": {
+    "Delay Above 60 minute up to 4 Hours": 0.20,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "ItlalaAlsharq-MJ": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "AzerbaijanAirlines": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Akitu Aviation": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "AlRawdatain-MJ": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "AlRawdatain-AVA": {
+    "Delay Above 60 minute up to 4 Hours": 0.20,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "Oman Air": {
+    "Delay Above 60 minute up to 4 Hours": 0.25,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.50
+  },
+  "AlRawdatain-VRS": {
+    "Delay Above 60 minute up to 4 Hours": 0.20,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  },
+  "ItlalaAlsharq-Kich": {
+    "Delay Above 60 minute up to 4 Hours": 0.20,
+    "Delay Above 4 Hours": 0.35,
+    "Delay Above 8 Hours": 0.50,
+    "service between 22:00 to 06:00": 0.25
+  }
+};
+
+// legacy price table removed; prices now come from prices_tables_corrected.js
+
+const airlineSystemMap = {
+  "Air Arabia":"CUPPS Service",
+  "Fly cham":"DCS Service",
+  "Egypt Air":"CUPPS Service",
+  "Emirates":"CUPPS Service",
+  "Fly Dubai":"CUPPS Service",
+  "Middle East airline":"CUPPS Service",
+  "Pegasus Airine":"CUPPS Service",
+  "QATAR AIRWAYS":"CUPPS Service",
+  "Syrian Air":"DCS Service",
+  "Turkish Airlines":"CUPPS Service",
+  "Meraj":"DCS Service",
+  "Royal Jordanian":"CUPPS Service",
+  "UR":"DCS Service",
+  "ItlalaAlsharq-YZD":"DCS Service",
+  "Fly Baghdad":"DCS Service",
+  "Avia Traffic":"DCS Service",
+  "Tail wind":"DCS Service",
+  "Mahan Air":"CUPPS Service",
+  "Armenia Air":"DCS Service",
+  "Jordan aviation":"DCS Service",
+  "TABAN AIR":"DCS Service",
+  "Jet Magic Airline":"DCS Service",
+  "Klas Jet Airline":"DCS Service",
+  "RED WINGS":"DCS Service",
+  "PAKISTAN AIR":"DCS Service",
+  "QESHM AIR":"DCS Service",
+  "Cash Customers":"DCS Service",
+  "ATA air":"DCS Service",
+  "Aseman air":"DCS Service",
+  "Nile Air":"DCS Service",
+  "ASA":"DCS Service",
+  "Sama Al Iraq - UT Air":"DCS Service",
+  "SAHA Air":"DCS Service",
+  "Pars Air":"DCS Service",
+  "Zagros Air":"DCS Service",
+  "AEROFLOT Airline":"DCS Service",
+  "Fly Arna":"DCS Service",
+  "Fly Nas":"CUPPS Service",
+  "Flyadeal":"DCS Service",
+  "Fly Sepehran":"DCS Service",
+  "VIP Terminal":"DCS Service",
+  "Salam Air":"CUPPS Service",
+  "ASL Group":"DCS Service",
+  "Baghdad Lounge":"DCS Service",
+  "Caspian Air":"DCS Service",
+  "Farish Air":"DCS Service",
+  "ItlalaAlsharq-ARN":"DCS Service",
+  "freebird":"DCS Service",
+  "Iran Tour":"DCS Service",
+  "Air Arabia-Abo Dhabi":"CUPPS Service",
+  "A Jet":"CUPPS Service",
+  "Gulf Air":"CUPPS Service",
+  "Sama terminal":"DCS Service",
+  "Global":"DCS Service",
+  "Simor":"DCS Service",
+  "AlRawdatain":"DCS Service",
+  "AlMarbad Company":"DCS Service",
+  "ItlalaAlsharq-AN":"DCS Service",
+  "ItlalaAlsharq-QM":"DCS Service",
+  "ItlalaAlsharq-SR":"DCS Service",
+  "Al Jazeera":"DCS Service",
+  "ItlalaAlsharq-SN":"DCS Service",
+  "ItlalaAlsharq-MJ":"DCS Service",
+  "AzerbaijanAirlines":"DCS Service",
+  "Akitu Aviation":"DCS Service",
+  "AlRawdatain-MJ":"DCS Service",
+  "AlRawdatain-AVA":"DCS Service",
+  "Oman Air":"CUPPS Service",
+  "AlRawdatain-VRS":"DCS Service",
+  "ItlalaAlsharq-Kich":"DCS Service",
+  "Sama Najaf-TBN":"DCS Service",
+  "Aegean Air":"DCS Service",
+  "Arab Wings":"DCS Service",
+  "Spice Jet":"DCS Service"
+};
+
+
+const baggageAreas = [
+  { area:"AL-JADREYAH", km:"23KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-KARADA", km:"31KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-GHADEER", km:"35KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"MUTHANA/ZAYOUNA", km:"37KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-BALADIYAT", km:"38KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"BABAL-MUADAM", km:"30KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-FADHEL", km:"31KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"PELSTAINSTREET", km:"32KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"HAYJAMEELA", km:"33KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-BENOUK", km:"36KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"HAYUR", km:"41KM", prices:{ "QATAR AIRWAYS":40, "Pegasus Airine":38, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":40 } },
+  { area:"AL-SADARCITY", km:"47KM", prices:{ "QATAR AIRWAYS":40, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":40 } },
+  { area:"BAGHDADAL-JADEEDA", km:"36KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"MASHTAL", km:"37KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"NUABAL-DUBAT", km:"40KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-AMEEN", km:"39KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-KAMALEYA", km:"41KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"ALUBAIDIY", km:"45KM", prices:{ "QATAR AIRWAYS":40, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":40 } },
+  { area:"AL-ADAMEYHA", km:"30KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-WAZEREYA", km:"34KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"SABAAABKAR", km:"37KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-SULAIKH", km:"38KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-SHAAB", km:"44KM", prices:{ "QATAR AIRWAYS":40, "Pegasus Airine":38, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":40 } },
+  { area:"BABAL-SHARQY", km:"26KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":38, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"HAYAL-JEEHAD", km:"14KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":25 } },
+  { area:"HAYAL-AMMEL", km:"18KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":25 } },
+  { area:"AL-BAYAA", km:"21KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"SHURTA", km:"21KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"HAYAL-EILAM", km:"22KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-SAYDEYA", km:"23KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"DUORA", km:"24KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"ABUDSHEER", km:"26KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"ARABJOUBUR", km:"33KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":45, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"HOURREJAB", km:"34KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":45, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"HAYAL-QADESYA", km:"20KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":25 } },
+  { area:"HAYALYARMOUK", km:"20KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":25 } },
+  { area:"AL-HARTHYA", km:"26KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"HAYAL-MANSOUR", km:"25KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-SALHEYA", km:"26KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"GREENZOON", km:"27KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"HAEFASTREET", km:"28KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"HAYAL-KADRAA", km:"19KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":25 } },
+  { area:"HAYAL-JAMEEAA", km:"20KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":25 } },
+  { area:"HAYAL-ADEL", km:"21KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-WASHASH", km:"23KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-TOBCHY", km:"24KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-HUREYA", km:"27KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-AMREYA", km:"15KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":25 } },
+  { area:"AL-GHAZALEYA", km:"23KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"ALSHULAA", km:"29KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-UTEFIA", km:"27KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-MUTHANAAIRPORT", km:"31KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-KHADMEYAH", km:"32KM", prices:{ "QATAR AIRWAYS":35, "Pegasus Airine":30, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":35 } },
+  { area:"AL-TAJEE", km:"51KM", prices:{ "QATAR AIRWAYS":40, "Pegasus Airine":45, "Egypt Air":19.89, "Royal Jordanian":17, "Turkish Airlines":40 } },
+  { area:"AL-HUSAINEYAH", km:"53KM", prices:{ "QATAR AIRWAYS":40, "Pegasus Airine":45, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":40 } },
+  { area:"AL-ROUSTUMEYA", km:"37KM", prices:{ "QATAR AIRWAYS":40, "Pegasus Airine":45, "Egypt Air":25.57, "Royal Jordanian":24, "Turkish Airlines":35 } },
+  { area:"AL-ZAFARANEYA", km:"42KM", prices:{ "QATAR AIRWAYS":40, "Pegasus Airine":38, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":40 } },
+  { area:"DEYALABRIEDGE", km:"47KM", prices:{ "QATAR AIRWAYS":40, "Pegasus Airine":38, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":40 } },
+  { area:"SALMANPACK", km:"64KM", prices:{ "QATAR AIRWAYS":50, "Pegasus Airine":45, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":50 } },
+  { area:"BASMAYA", km:"76KM", prices:{ "QATAR AIRWAYS":50, "Pegasus Airine":80, "Egypt Air":51.14, "Royal Jordanian":24, "Turkish Airlines":50 } },
+  { area:"AL-RADWANIA", km:"20KM", prices:{ "QATAR AIRWAYS":25, "Pegasus Airine":45, "Egypt Air":31.25, "Royal Jordanian":24, "Turkish Airlines":25 } }
+];
+
+function login(){
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPass").value.trim();
+
+  if(users[u] && users[u] === p){
+    currentUser = u;
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    document.getElementById("welcomeText").innerText = "Logged in as: " + currentUser;
+    initializeAreaDropdown();
+    initializeServicesTable();
+    setTodayDate();
+    refreshInvoiceNoPreview();
+    renderInvoices();
+    renderCash();
+    renderReports();
+  }else{
+    alert("Wrong username or password");
+  }
+}
+
+function logout(){
+  localStorage.removeItem("currentUser");
+  window.location.href = "index.html";
+}
+
+function showPage(pageId){
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(pageId).classList.add("active");
+  renderReports();
+}
+
+function setTodayDate(){
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  document.getElementById("invDate").value = `${yyyy}-${mm}-${dd}`;
+}
+
+function initializeAreaDropdown(){
+  const sel = document.getElementById("areaSelect");
+  sel.innerHTML = `<option value="">Select Area</option>`;
+  baggageAreas.forEach(a => {
+    const opt = document.createElement("option");
+    opt.value = a.area;
+    opt.textContent = a.area;
+    sel.appendChild(opt);
+  });
+}
+
+function toggleBaggageFields(){
+  const isBaggage = document.getElementById("ops").value === "Baggage Delivery";
+  document.getElementById("areaFieldWrap").classList.toggle("hidden", !isBaggage);
+  document.getElementById("kmFieldWrap").classList.toggle("hidden", !isBaggage);
+
+  if(!isBaggage){
+    document.getElementById("areaSelect").value = "";
+    document.getElementById("kmValue").value = "";
+  }
+}
+
+function onAreaChange(){
+  const areaVal = document.getElementById("areaSelect").value;
+  const found = baggageAreas.find(x => x.area === areaVal);
+  document.getElementById("kmValue").value = found ? found.km : "";
+  refreshAllServicePrices();
+}
+
+function handleTimeInput(input){
+  let value = input.value.replace(/\D/g, "").slice(0,4);
+  if(value.length >= 3){
+    value = value.slice(0,2) + ":" + value.slice(2);
+  }
+  input.value = value;
+
+  if(value.length === 5){
+    const [hh, mm] = value.split(":").map(Number);
+    if(Number.isNaN(hh) || Number.isNaN(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59){
+      input.value = "";
+    }
+  }
+}
+
+function timeToMinutes(t){
+  if(!t || !/^\d{2}:\d{2}$/.test(t)) return null;
+  const [h,m] = t.split(":").map(Number);
+  if(h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return h * 60 + m;
+}
+
+
+function isNightTime(timeStr){
+  const mins = timeToMinutes(timeStr);
+  if(mins === null) return false;
+  return mins >= 1320 || mins < 360;
+}
+
+function getCurrentFlightType(){
+  return document.getElementById("flightType").value === "Charter" ? "Charter" : "Schedule";
+}
+
+function getSelectedAirlineSystemService(){
+  const airline = String(document.getElementById("airline").value || "").trim().toLowerCase();
+
+  for (const key in airlineSystemMap) {
+    if (String(key).trim().toLowerCase() === airline) {
+      return airlineSystemMap[key];
+    }
+  }
+  return "";
+}
+
+function getBRSMode(){
+  const mtow = document.getElementById("mtow").value;
+
+  if(
+    mtow === "MTOW up to 25,000 kgs" ||
+    mtow === "MTOW – From 25,001 to 60,000 kgs" ||
+    mtow === "MTOW – From 60,001 to 100,000 kgs"
+  ) return "NB";
+
+  if(
+    mtow === "MTOW – From 100,001 to 200,000 kgs" ||
+    mtow === "MTOW – From 200,001 to 300,000 kgs" ||
+    mtow === "Above 300,000 kgs"
+  ) return "WB";
+
+  return "";
+}
+
+
+function getBaggageDeliveryPrice(){
+  if(document.getElementById("ops").value !== "Baggage Delivery") return 0;
+  const areaVal = document.getElementById("areaSelect").value;
+  const airline = document.getElementById("airline").value;
+  const found = baggageAreas.find(x => x.area === areaVal);
+  if(!found) return 0;
+  return parseFloat(found.prices[airline] || 0);
+}
+
+function getBasePrice(serviceName){
+  const airline = document.getElementById("airline").value;
+  const flightType = getCurrentFlightType();
+  const mtow = document.getElementById("mtow").value;
+  const ops = document.getElementById("ops").value;
+
+  if(serviceName === "Baggage Delivery") return getBaggageDeliveryPrice();
+
+  if(serviceName === "Basic handling") {
+    if(ops === "Baggage Delivery") return 0;
+    let price = getBasicHandlingPrice(airline, mtow, flightType) ?? 0;
+
+    if(ops === "Turnaround") return price;
+    if(ops === "Ferry In") {
+      const multiplier = getServicePrice(airline, "Ferry In", flightType) ?? 0.75;
+      return price * multiplier;
+    }
+    if(ops === "Ferry Out") {
+      const multiplier = getServicePrice(airline, "ferry out", flightType) ?? 0.50;
+      return price * multiplier;
+    }
+    return price;
+  }
+
+  if(serviceName === "BRS NB") {
+    let price = getBRSNBPrice(airline, mtow, flightType) ?? 0;
+    if(ops === "Turnaround") return price;
+    if(ops === "Ferry In") return price;
+    if(ops === "Ferry Out") return 0;
+    return price;
+  }
+
+  if(serviceName === "BRS WB") {
+    let price = getBRSWBPrice(airline, mtow, flightType) ?? 0;
+    if(ops === "Turnaround") return price;
+    if(ops === "Ferry In") return price;
+    if(ops === "Ferry Out") return 0;
+    return price;
+  }
+
+  if(
+    serviceName === "Delay Above 60 minute up to 4 Hours" ||
+    serviceName === "Delay Above 4 Hours" ||
+    serviceName === "Delay Above 8 Hours" ||
+    serviceName === "service between 22:00 to 06:00"
+  ){
+    const percentage = getServicePrice(airline, serviceName, flightType) ?? 0;
+    const basicHandlingPrice = getBasePrice("Basic handling");
+    return basicHandlingPrice * percentage;
+  }
+
+  return getServicePrice(airline, serviceName, flightType) ?? 0;
+}
+
+function initializeServicesTable(){
+  const body = document.getElementById("servicesBody");
+  body.innerHTML = "";
+
+  services.forEach((service, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="service-name">${service}</td>
+      <td><input type="number" step="1" id="qty_${index}" oninput="updateServiceRow(${index})"></td>
+      <td><input type="number" step="0.01" id="price_${index}" oninput="updateServiceRow(${index})"></td>
+      <td><input type="number" id="total_${index}" readonly class="readonly"></td>
+    `;
+    body.appendChild(tr);
+  });
+
+  refreshAllServicePrices();
+}
+
+function setInputState(el, {value="", readOnly=false, disabledLook=false} = {}){
+  if(!el) return;
+
+  el.value = value;
+  el.readOnly = readOnly;
+  el.disabled = false;
+  el.style.pointerEvents = "auto";
+  el.style.opacity = "1";
+
+  if(readOnly) el.classList.add("readonly");
+  else el.classList.remove("readonly");
+
+  if(disabledLook) el.classList.add("disabled-input");
+  else el.classList.remove("disabled-input");
+}
+function refreshAllServicePrices(){
+  const airlineSystemService = getSelectedAirlineSystemService();
+  const brsMode = getBRSMode();
+  const nightTriggered =
+    isNightTime(document.getElementById("ata").value) ||
+    isNightTime(document.getElementById("atd").value);
+  const ops = document.getElementById("ops").value;
+
+  services.forEach((service, index) => {
+    const qtyEl = document.getElementById("qty_" + index);
+    const priceEl = document.getElementById("price_" + index);
+    if(!qtyEl || !priceEl) return;
+
+    const currentQty = qtyEl.value;
+    const basePrice = Number(getBasePrice(service)).toFixed(2);
+
+    if(ops === "Baggage Delivery"){
+      if(service === "Baggage Delivery"){
+        setInputState(qtyEl, { value: 1, readOnly: true, disabledLook: false });
+        setInputState(priceEl, { value: basePrice, readOnly: true, disabledLook: false });
+      } else {
+        setInputState(qtyEl, { value: "", readOnly: true, disabledLook: true });
+        setInputState(priceEl, { value: "", readOnly: true, disabledLook: true });
+      }
+      updateServiceRow(index);
+      return;
+    }
+
+    if(service === "Basic handling"){
+      setInputState(qtyEl, { value: 1, readOnly: true, disabledLook: false });
+      setInputState(priceEl, { value: basePrice, readOnly: true, disabledLook: false });
+    }
+    else if(service === "Baggage Delivery"){
+      setInputState(qtyEl, { value: "", readOnly: true, disabledLook: true });
+      setInputState(priceEl, { value: "", readOnly: true, disabledLook: true });
+    }
+    else if(service === "CUPPS Service"){
+      const canUse = airlineSystemService === "CUPPS Service";
+      setInputState(qtyEl, {
+        value: canUse ? (currentQty || "") : "",
+        readOnly: !canUse,
+        disabledLook: !canUse
+      });
+      setInputState(priceEl, { value: basePrice, readOnly: true, disabledLook: false });
+    }
+    else if(service === "DCS Service"){
+      const canUse = airlineSystemService === "DCS Service";
+      setInputState(qtyEl, {
+        value: canUse ? (currentQty || "") : "",
+        readOnly: !canUse,
+        disabledLook: !canUse
+      });
+      setInputState(priceEl, { value: basePrice, readOnly: true, disabledLook: false });
+    }
+    else if(service === "BRS NB"){
+      if(brsMode === "NB"){
+        setInputState(qtyEl, { value: 1, readOnly: true, disabledLook: false });
+        setInputState(priceEl, { value: basePrice, readOnly: true, disabledLook: false });
+      } else {
+        setInputState(qtyEl, { value: "", readOnly: true, disabledLook: true });
+        setInputState(priceEl, { value: "0.00", readOnly: true, disabledLook: true });
+      }
+    }
+    else if(service === "BRS WB"){
+      if(brsMode === "WB"){
+        setInputState(qtyEl, { value: 1, readOnly: true, disabledLook: false });
+        setInputState(priceEl, { value: basePrice, readOnly: true, disabledLook: false });
+      } else {
+        setInputState(qtyEl, { value: "", readOnly: true, disabledLook: true });
+        setInputState(priceEl, { value: "0.00", readOnly: true, disabledLook: true });
+      }
+    }
+    else if(service === "service between 22:00 to 06:00"){
+      setInputState(qtyEl, {
+        value: nightTriggered ? 1 : "",
+        readOnly: !nightTriggered,
+        disabledLook: !nightTriggered
+      });
+      setInputState(priceEl, { value: basePrice, readOnly: true, disabledLook: false });
+    }
+    else if(delayServices.includes(service)){
+      setInputState(qtyEl, { value: currentQty || "", readOnly: false, disabledLook: false });
+      setInputState(priceEl, { value: basePrice, readOnly: true, disabledLook: false });
+    }
+    else{
+      setInputState(qtyEl, { value: currentQty || "", readOnly: false, disabledLook: false });
+      setInputState(priceEl, { value: basePrice, readOnly: true, disabledLook: false });
+    }
+
+    updateServiceRow(index);
+  });
+}
+function updateServiceRow(index){
+  const service = services[index];
+  const qtyEl = document.getElementById("qty_" + index);
+  const priceEl = document.getElementById("price_" + index);
+  const totalEl = document.getElementById("total_" + index);
+  const ops = document.getElementById("ops").value;
+
+  if(ops === "Baggage Delivery"){
+    if(service === "Baggage Delivery"){
+      qtyEl.value = 1;
+    }else{
+      qtyEl.value = "";
+      priceEl.value = "";
+      totalEl.value = "";
+      updateGrandTotal();
+      return;
+    }
+  }
+
+  if(service === "Basic handling"){
+    qtyEl.value = 1;
+  }
+
+  if(service === "BRS NB" && getBRSMode() === "NB"){
+    qtyEl.value = 1;
+  }
+
+  if(service === "BRS WB" && getBRSMode() === "WB"){
+    qtyEl.value = 1;
+  }
+
+if(service === "service between 22:00 to 06:00"){
+  // خليه فارغ حتى ما يفرض 1 تلقائياً
+}
+
+  const qty = parseFloat(qtyEl.value) || 0;
+  const price = parseFloat(priceEl.value) || 0;
+  totalEl.value = (qty * price).toFixed(2);
+
+  updateGrandTotal();
+}
+
+function updateGrandTotal(){
+  let total = 0;
+  services.forEach((_, index) => {
+    total += parseFloat(document.getElementById("total_" + index)?.value || 0);
+  });
+  document.getElementById("grandTotal").innerText = total.toFixed(2);
+}
+
+function getInvoices(){
+  return JSON.parse(localStorage.getItem("ops_invoices") || "[]");
+}
+
+function saveInvoices(arr){
+  localStorage.setItem("ops_invoices", JSON.stringify(arr));
+}
+
+function getCash(){
+  return JSON.parse(localStorage.getItem("ops_cash") || "[]");
+}
+
+function saveCashData(arr){
+  localStorage.setItem("ops_cash", JSON.stringify(arr));
+}
+
+function getInvoiceMonthPrefix(dateValue){
+  if(!dateValue) return "";
+  const [y,m] = dateValue.split("-");
+  return `${y}${m}`;
+}
+
+function generateInvoiceNo(dateValue, existingId = null){
+  const prefix = getInvoiceMonthPrefix(dateValue);
+  const invoices = getInvoices();
+  const sameMonth = invoices.filter(x => (x.invoiceNo || "").startsWith(prefix) && x.id !== existingId);
+
+  let maxSeq = 0;
+  sameMonth.forEach(inv => {
+    const seq = parseInt((inv.invoiceNo || "").slice(-4), 10);
+    if(!isNaN(seq) && seq > maxSeq) maxSeq = seq;
+  });
+
+  return prefix + String(maxSeq + 1).padStart(4, "0");
+}
+
+function refreshInvoiceNoPreview(){
+  const dateValue = document.getElementById("invDate").value;
+  if(!dateValue){
+    document.getElementById("invoiceNo").value = "";
+    document.getElementById("invoiceNoPreview").innerText = "";
+    return;
+  }
+
+  const invoiceNo = editingInvoiceId
+    ? (document.getElementById("invoiceNo").value || generateInvoiceNo(dateValue, editingInvoiceId))
+    : generateInvoiceNo(dateValue);
+
+  document.getElementById("invoiceNo").value = invoiceNo;
+  document.getElementById("invoiceNoPreview").innerText = invoiceNo;
+}
+
+function collectServicesData(){
+  const rows = [];
+  services.forEach((name, index) => {
+    rows.push({
+      service: name,
+      qty: parseFloat(document.getElementById("qty_" + index).value) || 0,
+      unitPrice: parseFloat(document.getElementById("price_" + index).value) || 0,
+      totalAmount: parseFloat(document.getElementById("total_" + index).value) || 0
+    });
+  });
+  return rows;
+}
+
+function saveInvoice(){
+  const dateValue = document.getElementById("invDate").value;
+  const airline = document.getElementById("airline").value;
+  const ops = document.getElementById("ops").value;
+  const area = document.getElementById("areaSelect").value;
+
+  if(!dateValue || !airline){
+    alert("Please fill at least Date and Airline");
+    return;
+  }
+
+  if(ops === "Baggage Delivery" && !area){
+    alert("Please select Area for Baggage Delivery");
+    return;
+  }
+
+  // calculateArrivalDiff();
+  // calculateDepartureDiff();
+  // refreshInvoiceNoPreview();
+// نافذة تأكيد قبل الحفظ
+const selectedServices = collectServicesData().filter(s => s.qty !== 0);
+
+let servicesText = selectedServices.length
+ ? selectedServices.map(s => s.service + " | Qty: " + s.qty + " | Total: " + s.totalAmount).join("\n")
+ : "No services";
+
+const grandTotal = document.getElementById("grandTotal").innerText;
+
+if(!confirm("Are you sure you want to save?\n\nServices:\n" + servicesText + "\n\nGrand Total: " + grandTotal)){
+ return;
+}
+  const data = {
+    id: editingInvoiceId || Date.now(),
+    invoiceNo: document.getElementById("invoiceNo").value,
+    date: dateValue,
+    airline: airline,
+    flightNo: document.getElementById("flightNo").value,
+    acReg: document.getElementById("acReg").value,
+    flightType: document.getElementById("flightType").value,
+    ops: ops,
+    mtow: document.getElementById("mtow").value,
+    ata: document.getElementById("ata").value,
+    sta: document.getElementById("sta").value,
+    atd: document.getElementById("atd").value,
+    std: document.getElementById("std").value,
+    area: document.getElementById("areaSelect").value,
+    km: document.getElementById("kmValue").value,
+    comment: document.getElementById("comment").value,
+    services: collectServicesData(),
+    grandTotal: parseFloat(document.getElementById("grandTotal").innerText) || 0,
+    createdBy: currentUser,
+    isReversal: false,
+    reversedFrom: "",
+    reversedByInvoiceNo: ""
+  };
+
+  let invoices = getInvoices();
+
+  if(editingInvoiceId){
+    const idx = invoices.findIndex(x => x.id === editingInvoiceId);
+    if(idx !== -1) invoices[idx] = data;
+  }else{
+    invoices.push(data);
+    editingInvoiceId = data.id;
+  }
+
+  saveInvoices(invoices);
+  renderInvoices();
+  renderReports();
+  alert("Invoice saved successfully");
+}
+
+function reverseInvoice(){
+  const invoiceNo = document.getElementById("reverseInvoiceNo").value.trim();
+  if(!invoiceNo){
+    alert("Enter invoice number");
+    return;
+  }
+
+  const invoices = getInvoices();
+  const original = invoices.find(x => (x.invoiceNo || "").trim() === invoiceNo);
+
+  if(!original){
+    alert("Invoice not found");
+    return;
+  }
+
+  if(original.isReversal){
+    alert("This invoice is already a reverse invoice");
+    return;
+  }
+
+  const alreadyReversed = invoices.some(x => x.reversedFrom === original.invoiceNo);
+  if(alreadyReversed){
+    alert("This invoice was already reversed before");
+    return;
+  }
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,"0");
+  const dd = String(today.getDate()).padStart(2,"0");
+  const reverseDate = `${yyyy}-${mm}-${dd}`;
+  const reverseInvoiceNo = generateInvoiceNo(reverseDate);
+
+  const reversedServices = (original.services || []).map(row => ({
+    service: row.service,
+    qty: -(parseFloat(row.qty) || 0),
+    unitPrice: -(parseFloat(row.unitPrice) || 0),
+    totalAmount: -(parseFloat(row.totalAmount) || 0)
+  }));
+
+  const reversedInvoice = {
+    ...original,
+    id: Date.now(),
+    invoiceNo: reverseInvoiceNo,
+    date: reverseDate,
+    services: reversedServices,
+    grandTotal: -(parseFloat(original.grandTotal) || 0),
+    createdBy: currentUser,
+    isReversal: true,
+    reversedFrom: original.invoiceNo,
+    reversedByInvoiceNo: ""
+  };
+
+  const originalIndex = invoices.findIndex(x => x.id === original.id);
+  if(originalIndex !== -1){
+    invoices[originalIndex].reversedByInvoiceNo = reverseInvoiceNo;
+  }
+
+  invoices.push(reversedInvoice);
+  saveInvoices(invoices);
+  renderInvoices();
+  renderReports();
+
+  document.getElementById("reverseInvoiceNo").value = "";
+  alert("Reverse invoice created: " + reverseInvoiceNo);
+}
+
+function newInvoice(){
+  editingInvoiceId = null;
+  setTodayDate();
+  document.getElementById("airline").value = "";
+  document.getElementById("flightNo").value = "";
+  document.getElementById("acReg").value = "";
+  document.getElementById("flightType").value = "";
+  document.getElementById("ops").value = "";
+  document.getElementById("mtow").value = "";
+  document.getElementById("ata").value = "";
+  document.getElementById("sta").value = "";
+  document.getElementById("atd").value = "";
+  document.getElementById("std").value = "";
+  document.getElementById("areaSelect").value = "";
+  document.getElementById("kmValue").value = "";
+  document.getElementById("comment").value = "";
+  toggleBaggageFields();
+  initializeServicesTable();
+  refreshInvoiceNoPreview();
+}
+
+
+function renderInvoices(){
+  const list = document.getElementById("invoiceList");
+  const invoices = getInvoices();
+  list.innerHTML = "";
+
+  invoices.forEach((inv, i) => {
+    const canManage = currentUser === "admin";
+    const payment = getInvoicePaymentInfo(inv);
+    let statusHtml = "-";
+
+    if(inv.isReversal){
+      statusHtml = `<span class="badge-negative">Reversal of ${inv.reversedFrom || ""}</span>`;
+    }else if(inv.reversedByInvoiceNo){
+      statusHtml = `<span class="badge-green">Reversed by ${inv.reversedByInvoiceNo}</span>`;
+    }else if(payment.status === "Paid"){
+      statusHtml = `<span class="badge-green">Paid</span>`;
+    }else if(payment.status === "Partially Paid"){
+      statusHtml = `<span class="tag-partial">Partially Paid (${payment.outstanding.toFixed(2)} due)</span>`;
+    }else{
+      statusHtml = `<span class="tag-outstanding">Outstanding</span>`;
+    }
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${inv.invoiceNo || ""}</td>
+      <td>${inv.date || ""}</td>
+      <td>${inv.airline || ""}</td>
+      <td>${inv.ops || ""}</td>
+      <td>${Number(inv.grandTotal || 0).toFixed(2)}</td>
+      <td>${inv.createdBy || ""}</td>
+      <td>${statusHtml}</td>
+      <td>
+        <button class="action-btn secondary" onclick="loadInvoice(${inv.id}, false)">View</button>
+        ${canManage && !inv.isReversal ? `<button class="action-btn primary" onclick="loadInvoice(${inv.id}, true)">Edit</button>` : ``}
+        ${canManage ? `<button class="action-btn danger" onclick="deleteInvoice(${inv.id})">Delete</button>` : ``}
+      </td>
+    `;
+    list.appendChild(tr);
+  });
+}
+
+function loadInvoice(id, forEdit){
+  const inv = getInvoices().find(x => x.id === id);
+  if(!inv) return;
+
+  showPage("invoicePage");
+  editingInvoiceId = forEdit ? id : null;
+
+  document.getElementById("invDate").value = inv.date || "";
+  document.getElementById("invoiceNo").value = inv.invoiceNo || "";
+  document.getElementById("invoiceNoPreview").innerText = inv.invoiceNo || "";
+  document.getElementById("airline").value = inv.airline || "";
+  document.getElementById("flightNo").value = inv.flightNo || "";
+  document.getElementById("acReg").value = inv.acReg || "";
+  document.getElementById("flightType").value = inv.flightType || "";
+  document.getElementById("ops").value = inv.ops || "";
+  document.getElementById("mtow").value = inv.mtow || "";
+  document.getElementById("ata").value = inv.ata || "";
+  document.getElementById("sta").value = inv.sta || "";
+
+  document.getElementById("atd").value = inv.atd || "";
+  document.getElementById("std").value = inv.std || "";
+  document.getElementById("areaSelect").value = inv.area || "";
+  document.getElementById("kmValue").value = inv.km || "";
+  document.getElementById("comment").value = inv.comment || "";
+
+  toggleBaggageFields();
+  initializeServicesTable();
+
+  if(Array.isArray(inv.services)){
+    inv.services.forEach((row, index) => {
+      const q = document.getElementById("qty_" + index);
+      const p = document.getElementById("price_" + index);
+      if(q) q.value = row.qty !== 0 ? row.qty : "";
+      if(p) p.value = row.unitPrice !== 0 ? row.unitPrice : "";
+    });
+  }
+
+  refreshAllServicePrices();
+
+  if(Array.isArray(inv.services)){
+    inv.services.forEach((row, index) => {
+      const q = document.getElementById("qty_" + index);
+      const p = document.getElementById("price_" + index);
+
+      if(q && !q.readOnly){
+        q.value = row.qty !== 0 ? row.qty : "";
+      }
+      if(p && !p.readOnly){
+        p.value = row.unitPrice !== 0 ? row.unitPrice : "";
+      }
+      updateServiceRow(index);
+    });
+  }
+
+  // calculateArrivalDiff();
+  // calculateDepartureDiff();
+
+  if(inv.isReversal || !forEdit){
+    editingInvoiceId = null;
+  }
+}
+
+function deleteInvoice(id){
+  if(currentUser !== "admin"){
+    alert("Only admin can delete");
+    return;
+  }
+  if(!confirm("Delete this invoice?")) return;
+
+  let invoices = getInvoices();
+  invoices = invoices.filter(x => x.id !== id);
+  saveInvoices(invoices);
+  renderInvoices();
+  renderReports();
+}
+
+function saveCash(){
+  const row = {
+    id: Date.now(),
+    date: document.getElementById("cashDate").value,
+    customer: document.getElementById("cashCustomer").value,
+    amount: parseFloat(document.getElementById("cashAmount").value) || 0,
+    desc: document.getElementById("cashDesc").value,
+    createdBy: currentUser
+  };
+
+  if(!row.date || !row.customer){
+    alert("Please fill Date and Customer");
+    return;
+  }
+
+  const data = getCash();
+  data.push(row);
+  saveCashData(data);
+
+  document.getElementById("cashDate").value = "";
+  document.getElementById("cashCustomer").value = "";
+  document.getElementById("cashAmount").value = "";
+  document.getElementById("cashDesc").value = "";
+
+  renderCash();
+  renderReports();
+}
+
+function renderCash(){
+  const list = document.getElementById("cashList");
+  const rows = getCash();
+  list.innerHTML = "";
+
+  rows.forEach((r, i) => {
+    const canManage = currentUser === "admin";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${r.date || ""}</td>
+      <td>${r.customer || ""}</td>
+      <td>${Number(r.amount || 0).toFixed(2)}</td>
+      <td>${r.desc || ""}</td>
+      <td>${r.createdBy || ""}</td>
+      <td>${canManage ? `<button class="action-btn danger" onclick="deleteCash(${r.id})">Delete</button>` : "-"}</td>
+    `;
+    list.appendChild(tr);
+  });
+}
+
+function deleteCash(id){
+  if(currentUser !== "admin"){
+    alert("Only admin can delete");
+    return;
+  }
+  if(!confirm("Delete this cash record?")) return;
+
+  let rows = getCash();
+  rows = rows.filter(x => x.id !== id);
+  saveCashData(rows);
+  renderCash();
+  renderReports();
+}
+
+function renderReports(){}
+
+function printCurrentInvoice(){
+  const invoiceNo = document.getElementById("invoiceNo").value;
+  const invoices = JSON.parse(localStorage.getItem("ops_invoices") || "[]");
+
+  const exists = invoices.find(inv => inv.invoiceNo === invoiceNo);
+
+  if(!exists){
+    alert("Please save the invoice first");
+    return;
+  }
+
+  const ops = document.getElementById("ops").value;
+  const isBaggage = ops === "Baggage Delivery";
+  const servicesData = collectServicesData().filter(s => s.totalAmount !== 0 && s.qty !== 0);
+  const isNegative = (parseFloat(document.getElementById("grandTotal").innerText) || 0) < 0;
+  const titleText = isBaggage ? "BAGGAGE DELIVERY" : "DELIVERED SERVICE";
+
+  const html = `
+    <html>
+    <head>
+      <title>Invoice Print</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:25px;color:#10213a;position:relative}
+        .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+        .brand{font-size:26px;font-weight:bold;color:#0f4cbd}
+        .sub{font-size:18px;margin-top:6px}
+        .box{border:1px solid #c9d8f5;border-radius:10px;padding:12px;margin-bottom:18px}
+        .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+        .item{padding:8px;border:1px solid #e2e8f7;border-radius:8px;background:#f9fbff}
+        .label{font-size:12px;font-weight:bold;color:#37517d}
+        .value{margin-top:4px;font-size:14px}
+        table{width:100%;border-collapse:collapse;margin-top:10px}
+        th,td{border:1px solid #c9d8f5;padding:8px;text-align:center;font-size:13px}
+        th{background:#eef4ff;color:#0f4cbd}
+        .left{text-align:left}
+        .total{margin-top:18px;display:flex;justify-content:flex-end}
+        .total div{min-width:260px;border:1px solid #c9d8f5;border-radius:10px;padding:12px 16px;background:#eef4ff;font-weight:bold;display:flex;justify-content:space-between}
+        .negative{color:#b42318;font-weight:bold}
+      </style>
+    </head>
+    <body>
+      <div class="header">
+  <div>
+    <div style="margin-bottom:10px;">
+      <img src="nas_logo.png" style="height:150px;">
+    </div>
+    <div class="sub">${titleText}</div>
+  </div>
+  <div>
+          <div><strong>Invoice No:</strong> ${document.getElementById("invoiceNo").value || ""}</div>
+          <div><strong>Date:</strong> ${document.getElementById("invDate").value || ""}</div>
+          ${isNegative ? `<div class="negative"><strong>REVERSE INVOICE</strong></div>` : ``}
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="grid">
+          <div class="item"><div class="label">Airline</div><div class="value">${document.getElementById("airline").value || ""}</div></div>
+          <div class="item"><div class="label">Flight No.</div><div class="value">${document.getElementById("flightNo").value || ""}</div></div>
+          <div class="item"><div class="label">A/C Reg.</div><div class="value">${document.getElementById("acReg").value || ""}</div></div>
+          <div class="item"><div class="label">Flight Type</div><div class="value">${document.getElementById("flightType").value || ""}</div></div>
+          <div class="item"><div class="label">OPS</div><div class="value">${document.getElementById("ops").value || ""}</div></div>
+          <div class="item"><div class="label">MTOW</div><div class="value">${document.getElementById("mtow").value || ""}</div></div>
+          <div class="item"><div class="label">ATA</div><div class="value">${document.getElementById("ata").value || ""}</div></div>
+          <div class="item"><div class="label">STA</div><div class="value">${document.getElementById("sta").value || ""}</div></div>
+          <div class="item"><div class="label">ATD</div><div class="value">${document.getElementById("atd").value || ""}</div></div>
+          <div class="item"><div class="label">STD</div><div class="value">${document.getElementById("std").value || ""}</div></div>
+          <div class="item"><div class="label">Area</div><div class="value">${document.getElementById("areaSelect").value || ""}</div></div>
+          <div class="item"><div class="label">KM</div><div class="value">${document.getElementById("kmValue").value || ""}</div></div>
+          <div class="item"><div class="label">Comment</div><div class="value">${document.getElementById("comment").value || ""}</div></div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th class="left">Service</th>
+            <th>QTY</th>
+            <th>Unit Price</th>
+            <th>Total Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${servicesData.map(s => `
+            <tr>
+              <td class="left">${s.service}</td>
+              <td>${s.qty}</td>
+              <td>${Number(s.unitPrice).toFixed(2)}</td>
+              <td>${Number(s.totalAmount).toFixed(2)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+
+      <div class="total">
+        <div>
+          <span>Grand Total</span>
+          <span>${document.getElementById("grandTotal").innerText}</span>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const printWindow = window.open("", "_blank");
+  if(!printWindow){
+    alert("Popup blocked");
+    return;
+  }
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 500);
+}
+
+function exportExcel(){
+  const invoices = getInvoices();
+  if(!invoices.length){
+    alert("No invoices to export");
+    return;
+  }
+
+  const rows = [];
+
+  invoices.forEach(inv => {
+    const base = {
+      "Invoice No": inv.invoiceNo || "",
+      "Date": inv.date || "",
+      "Airline": inv.airline || "",
+      "Flight No": inv.flightNo || "",
+      "A/C Reg.": inv.acReg || "",
+      "Flight Type": inv.flightType || "",
+      "OPS": inv.ops || "",
+      "MTOW": inv.mtow || "",
+      "ATA": inv.ata || "",
+      "STA": inv.sta || "",
+  
+      "ATD": inv.atd || "",
+      "STD": inv.std || "",
+      "Diff Dep. in Min": inv.depDiff || "",
+      "Area": inv.area || "",
+      "KM": inv.km || "",
+      "Comment": inv.comment || "",
+      "Grand Total": Number(inv.grandTotal || 0).toFixed(2),
+      "Created By": inv.createdBy || "",
+      "Is Reversal": inv.isReversal ? "Yes" : "No",
+      "Reversed From": inv.reversedFrom || "",
+      "Reversed By Invoice No": inv.reversedByInvoiceNo || "",
+      "Payment Status": getInvoicePaymentInfo(inv).status,
+      "Outstanding Amount": getInvoicePaymentInfo(inv).outstanding.toFixed(2)
+    };
+
+    if(Array.isArray(inv.services)){
+      inv.services.forEach(s => {
+        base[`${s.service} QTY`] = s.qty;
+        base[`${s.service} Unit Price`] = parseFloat(s.unitPrice) || 0;
+      });
+    }
+
+    rows.push(base);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, "Invoices");
+  XLSX.writeFile(wb, "NAS_WATANIA_INVOICE_REPORT.xlsx");
+}
+
+
+function getReceiptsForPayments(){
+  return JSON.parse(localStorage.getItem("receipts_v9") || "[]");
+}
+
+function getAppliedTotalsMap(){
+  const map = {};
+  getReceiptsForPayments().forEach(r => {
+    if(!Array.isArray(r.appliedInvoices)) return;
+    const sign = String(r.type || "").toLowerCase() === "reverse" ? -1 : 1;
+    r.appliedInvoices.forEach(a => {
+      const key = String(a.invoiceId || a.invoiceNo || "");
+      const amt = Math.abs(parseFloat(a.appliedAmount || a.amount || 0));
+      if(!key || !amt) return;
+      map[key] = (map[key] || 0) + (sign * amt);
+    });
+  });
+  return map;
+}
+
+function getInvoicePaymentInfo(inv){
+  if(inv.isReversal){
+    return {paid:0, outstanding:0, status:"Reversal"};
+  }
+  if(inv.reversedByInvoiceNo){
+    return {paid:0, outstanding:0, status:"Reversed"};
+  }
+  const total = Math.abs(parseFloat(inv.grandTotal || 0));
+  const appliedMap = getAppliedTotalsMap();
+  const key = String(inv.id || inv.invoiceNo || "");
+  const paid = Math.max(0, Math.min(total, parseFloat(appliedMap[key] || 0)));
+  const outstanding = Math.max(0, total - paid);
+  let status = "Outstanding";
+  if(outstanding < 0.005) status = "Paid";
+  else if(paid > 0) status = "Partially Paid";
+  return {paid, outstanding, status};
+}
+
+function renderCash(){}
+
+window.onload = function(){
+  currentUser = localStorage.getItem("currentUser") || "";
+  if(!currentUser){
+    window.location.href = "index.html";
+    return;
+  }
+  const welcome = document.getElementById("welcomeText");
+  if(welcome){
+    welcome.innerText = "Logged in as: " + currentUser;
+  }
+  initializeAreaDropdown();
+  initializeServicesTable();
+  toggleBaggageFields();
+  if(typeof setTodayDate === "function") setTodayDate();
+  if(typeof refreshInvoiceNoPreview === "function") refreshInvoiceNoPreview();
+  if(typeof renderInvoices === "function") renderInvoices();
+};
+
+</script></body></html>

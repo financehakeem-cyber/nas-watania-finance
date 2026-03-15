@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAS WATANIA - Reports</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <h1>NAS WATANIA Reports</h1>
+  <div class="nav">
+    <a href="invoice.html">Invoices</a>
+    <a href="cash.html">Cash Collection</a>
+    <a href="reports.html">Reports</a>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="pagewrap">
+  <div class="card">
+    <h3>Company Statement</h3>
+    <div class="section-actions">
+      <div class="field" style="min-width:220px;">
+        <label>Company</label>
+        <select id="companySelect"></select>
+      </div>
+      <div class="field">
+        <label>From</label>
+        <input type="date" id="fromDate">
+      </div>
+      <div class="field">
+        <label>To</label>
+        <input type="date" id="toDate">
+      </div>
+    </div>
+    <div class="section-actions">
+      <button class="action-btn primary" onclick="runCompanyReport()">Generate Report</button>
+      <button class="action-btn secondary" onclick="exportCompanyExcel()">Export Excel</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Reference</th>
+          <th>Debit</th>
+          <th>Credit</th>
+          <th>Running Balance</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="companyReport"></tbody>
+    </table>
+  </div>
+<div class="card">
+<h3>EBT Report</h3>
+
+<div class="section-actions">
+
+<div class="field">
+<label>From</label>
+<input type="date" id="ebtFromDate">
+</div>
+
+<div class="field">
+<label>To</label>
+<input type="date" id="ebtToDate">
+</div>
+
+<button class="action-btn primary" onclick="generateEBTReport()">Generate</button>
+<button class="action-btn secondary" onclick="exportEBTExcel()">Export Excel</button>
+
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Company</th>
+<th>TRX.No</th>
+<th>Excess Baggage QTY</th>
+<th>CN.EBT</th>
+</tr>
+</thead>
+<tbody id="ebtReportBody"></tbody>
+</table>
+
+</div>
+<div class="card">
+<h3>PAX Report</h3>
+
+<div class="section-actions">
+
+<div class="field">
+<label>From</label>
+<input type="date" id="paxFromDate">
+</div>
+
+<div class="field">
+<label>To</label>
+<input type="date" id="paxToDate">
+</div>
+
+<button class="action-btn primary" onclick="generatePAXReport()">Generate</button>
+<button class="action-btn secondary" onclick="exportPAXExcel()">Export Excel</button>
+
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Airline</th>
+<th>Flight No</th>
+<th>PAX</th>
+</tr>
+</thead>
+<tbody id="paxReportBody"></tbody>
+</table>
+
+</div>
+<div class="card">
+  <h3>Aging Report</h3>
+
+  <div class="section-actions">
+    <button class="action-btn primary" onclick="generateAgingReport()">Generate Report</button>
+    <button class="action-btn secondary" onclick="exportAgingExcel()">Export Excel</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Company</th>
+        <th>0-15</th>
+        <th>16-30</th>
+        <th>31-45</th>
+        <th>46-60</th>
+        <th>61-75</th>
+        <th>76-90</th>
+        <th>Over 90</th>
+      </tr>
+    </thead>
+    <tbody id="agingReportBody"></tbody>
+  </table>
+
+  <div id="agingTotals" style="margin-top:10px;font-weight:bold;"></div>
+</div>
+<div class="card">
+  <h3>Services by Month Report</h3>
+
+  <div class="section-actions">
+    <button class="action-btn primary" onclick="generateServicesMonthReport()">Generate Report</button>
+    <button class="action-btn secondary" onclick="exportServicesMonthExcel()">Export Excel</button>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table id="servicesMonthTable">
+      <thead id="servicesMonthHead"></thead>
+      <tbody id="servicesMonthBody"></tbody>
+    </table>
+  </div>
+</div>
+  <div class="card" id="adminTools" style="display:none;">
+    <h3>Admin Tools</h3>
+    <div class="section-actions">
+      <button class="action-btn primary" onclick="downloadBackup()">Download Backup</button>
+      <label class="action-btn secondary" for="restoreFileInput" style="display:inline-block;">
+        Restore Backup
+      </label>
+      <input type="file" id="restoreFileInput" accept=".json" style="display:none;" onchange="restoreBackup(event)">
+    </div>
+    <p class="muted">Backup and restore are available only for admin.</p>
+  </div>
+</div>
+
+<script>
+const currentUser = localStorage.getItem("currentUser") || "";
+if(!currentUser){ window.location.href = "index.html"; }
+
+function logout(){
+  localStorage.removeItem("currentUser");
+  window.location.href = "index.html";
+}
+
+function getInvoices(){ return JSON.parse(localStorage.getItem("ops_invoices") || "[]"); }
+function getReceipts(){ return JSON.parse(localStorage.getItem("receipts_v9") || "[]"); }
+
+function isAdmin(){ return currentUser === "admin"; }
+
+function showAdminTools(){
+  const box = document.getElementById("adminTools");
+  if(box) box.style.display = isAdmin() ? "block" : "none";
+}
+
+function getAppliedTotalsMap(){
+  const map = {};
+  getReceipts().forEach(r => {
+    if(!Array.isArray(r.appliedInvoices)) return;
+    const sign = String(r.type || "").toLowerCase() === "reverse" ? -1 : 1;
+    r.appliedInvoices.forEach(a => {
+      const key = String(a.invoiceId || a.invoiceNo || "");
+      const amt = Math.abs(parseFloat(a.appliedAmount || a.amount || 0));
+      if(!key || !amt) return;
+      map[key] = (map[key] || 0) + (sign * amt);
+    });
+  });
+  return map;
+}
+
+function getInvoicePaymentInfo(inv, appliedMap){
+  if(inv.isReversal){
+    return {paid:0, outstanding:0, status:"Reversal"};
+  }
+  if(inv.reversedByInvoiceNo){
+    return {paid:0, outstanding:0, status:"Reversed"};
+  }
+  const total = Math.abs(parseFloat(inv.grandTotal || 0));
+  const key = String(inv.id || inv.invoiceNo || "");
+  const paid = Math.max(0, Math.min(total, parseFloat(appliedMap[key] || 0)));
+  const outstanding = Math.max(0, total - paid);
+
+  let status = "Outstanding";
+  if(outstanding < 0.005) status = "Paid";
+  else if(paid > 0) status = "Partially Paid";
+
+  return {paid, outstanding, status};
+}
+
+function loadCompanies(){
+  const companies = new Set([
+    "Air Arabia","Fly cham","Egypt Air","Emirates","Fly Dubai","Middle East airline",
+    "Pegasus Airine","QATAR AIRWAYS","Syrian Air","Turkish Airlines","Meraj","Royal Jordanian",
+    "UR","ItlalaAlsharq-YZD","Fly Baghdad","Avia Traffic","Tail wind","Mahan Air","Armenia Air",
+    "Jordan aviation","TABAN AIR","Jet Magic Airline","Klas Jet Airline","RED WINGS","PAKISTAN AIR",
+    "QESHM AIR","Cash Customers","ATA air","Aseman air","Nile Air","ASA","Sama Al Iraq - UT Air",
+    "SAHA Air","Pars Air","Zagros Air","AEROFLOT Airline","Fly Arna","Fly Nas","Flyadeal",
+    "Fly Sepehran","VIP Terminal","Salam Air","ASL Group","Baghdad Lounge","Caspian Air","Farish Air",
+    "ItlalaAlsharq-ARN","freebird","Iran Tour","Air Arabia-Abo Dhabi","A Jet","Gulf Air","Sama terminal",
+    "Global","Simor","AlRawdatain","AlMarbad Company","ItlalaAlsharq-AN","ItlalaAlsharq-QM",
+    "ItlalaAlsharq-SR","Al Jazeera","ItlalaAlsharq-SN","ItlalaAlsharq-MJ","AzerbaijanAirlines",
+    "Akitu Aviation","AlRawdatain-MJ","AlRawdatain-AVA","Oman Air","AlRawdatain-VRS",
+    "ItlalaAlsharq-Kich","Sama Najaf-TBN","Aegean Air","Arab Wings","Spice Jet"
+  ]);
+
+  getInvoices().forEach(i => { if(i.airline) companies.add(i.airline); });
+  getReceipts().forEach(r => { if(r.company) companies.add(r.company); });
+
+  const select = document.getElementById("companySelect");
+  select.innerHTML = '<option value="">Select Company</option>';
+
+  [...companies].sort().forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
+  });
+}
+
+function runCompanyReport(){
+  const company = document.getElementById("companySelect").value;
+  const from = document.getElementById("fromDate").value;
+  const to = document.getElementById("toDate").value;
+
+  if(!company){
+    alert("Please select company");
+    return;
+  }
+
+  const invoices = getInvoices();
+  const receipts = getReceipts();
+  const appliedMap = getAppliedTotalsMap();
+  let rows = [];
+
+  invoices.forEach(i => {
+    if(i.airline !== company) return;
+    if((from && i.date < from) || (to && i.date > to)) return;
+
+    const amount = Math.abs(parseFloat(i.grandTotal || 0));
+    const info = getInvoicePaymentInfo(i, appliedMap);
+
+    rows.push({
+      date: i.date || "",
+      type: i.isReversal ? "Reverse Invoice" : "Invoice",
+      ref: i.invoiceNo || "",
+      debit: i.isReversal ? 0 : amount,
+      credit: i.isReversal ? amount : 0,
+      status: info.status
+    });
+  });
+
+  receipts.forEach(r => {
+    if(r.company !== company) return;
+    if((from && r.date < from) || (to && r.date > to)) return;
+
+    const amount = Math.abs(parseFloat(r.amount || 0));
+    const isReverse = String(r.type || "").toLowerCase() === "reverse";
+
+    rows.push({
+      date: r.date || "",
+      type: isReverse ? "Reverse Collection" : "Collection",
+      ref: r.no || "",
+      debit: isReverse ? amount : 0,
+      credit: isReverse ? 0 : amount,
+      status: Array.isArray(r.appliedInvoices) && r.appliedInvoices.length ? "Applied" : "-"
+    });
+  });
+
+  rows.sort((a,b) => {
+    if(a.date === b.date) return String(a.ref).localeCompare(String(b.ref));
+    return String(a.date).localeCompare(String(b.date));
+  });
+
+  let balance = 0;
+  const table = document.getElementById("companyReport");
+  table.innerHTML = "";
+
+  rows.forEach(r => {
+    balance += r.debit;
+    balance -= r.credit;
+
+    table.innerHTML += `
+      <tr>
+        <td>${r.date}</td>
+        <td>${r.type}</td>
+        <td>${r.ref}</td>
+        <td>${r.debit.toFixed(2)}</td>
+        <td>${r.credit.toFixed(2)}</td>
+        <td>${balance.toFixed(2)}</td>
+        <td>${r.status}</td>
+      </tr>
+    `;
+  });
+}
+
+function exportCompanyExcel(){
+  const table = document.getElementById("companyReport");
+  if(!table.rows.length){
+    alert("No data");
+    return;
+  }
+
+  const data = [];
+  for(const r of table.rows){
+    data.push({
+      Date: r.cells[0].innerText,
+      Type: r.cells[1].innerText,
+      Reference: r.cells[2].innerText,
+      Debit: r.cells[3].innerText,
+      Credit: r.cells[4].innerText,
+      Balance: r.cells[5].innerText,
+      Status: r.cells[6].innerText
+    });
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "Statement");
+  XLSX.writeFile(wb, "Company_Statement.xlsx");
+}
+
+function downloadBackup(){
+  if(!isAdmin()){
+    alert("Only admin can create backup");
+    return;
+  }
+  const data = {
+    invoices: getInvoices(),
+    receipts: getReceipts()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const today = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = "NAS_BACKUP_" + today + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function restoreBackup(event){
+  if(!isAdmin()){
+    alert("Only admin can restore backup");
+    event.target.value = "";
+    return;
+  }
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = JSON.parse(e.target.result || "{}");
+      if(!confirm("This will replace current data. Continue?")) return;
+      localStorage.setItem("ops_invoices", JSON.stringify(data.invoices || []));
+      localStorage.setItem("receipts_v9", JSON.stringify(data.receipts || []));
+      alert("Backup restored successfully");
+      location.reload();
+    }catch(err){
+      alert("Invalid backup file");
+    }finally{
+      event.target.value = "";
+    }
+  };
+  reader.readAsText(file);
+}
+let ebtRows = [];
+
+function generateEBTReport(){
+  const from = document.getElementById("ebtFromDate").value;
+  const to = document.getElementById("ebtToDate").value;
+
+  if(!from || !to){
+    alert("Select From and To date");
+    return;
+  }
+
+  if(from > to){
+    alert("From date must be before To date");
+    return;
+  }
+
+  const invoices = getInvoices();
+  const receipts = getReceipts();
+
+  ebtRows = [];
+
+  invoices.forEach(inv => {
+    if(!inv.date) return;
+    if(inv.date < from || inv.date > to) return;
+
+    (inv.services || []).forEach(s => {
+      if(String(s.service || "").trim() === "Excess Baggage"){
+        ebtRows.push({
+          date: inv.date || "",
+          company: inv.airline || "",
+          trx: inv.invoiceNo || "",
+          qty: Number(s.qty || 0),
+          cash: ""
+        });
+      }
+    });
+  });
+
+  receipts.forEach(r => {
+    if(!r.date) return;
+    if(r.date < from || r.date > to) return;
+
+    const srv = String(r.service || "").trim().toUpperCase();
+    if(srv !== "CN.EBT" && srv !== "EBT.CN") return;
+
+    ebtRows.push({
+      date: r.date || "",
+      company: r.company || "",
+      trx: r.no || "",
+      qty: "",
+      cash: Number(r.amount || 0).toFixed(2)
+    });
+  });
+
+  ebtRows.sort((a, b) => {
+    if(a.date === b.date) return String(a.trx).localeCompare(String(b.trx));
+    return String(a.date).localeCompare(String(b.date));
+  });
+
+  const body = document.getElementById("ebtReportBody");
+  body.innerHTML = "";
+
+  if(!ebtRows.length){
+    body.innerHTML = `
+      <tr>
+        <td colspan="5">No data found</td>
+      </tr>
+    `;
+    return;
+  }
+
+  ebtRows.forEach(r => {
+    body.innerHTML += `
+      <tr>
+        <td>${r.date}</td>
+        <td>${r.company}</td>
+        <td>${r.trx}</td>
+        <td>${r.qty}</td>
+        <td>${r.cash}</td>
+      </tr>
+    `;
+  });
+}
+
+function exportEBTExcel(){
+  if(!ebtRows.length){
+    alert("Generate report first");
+    return;
+  }
+
+  const rows = ebtRows.map(r => ({
+    "Date": r.date,
+    "Company": r.company,
+    "TRX.No": r.trx,
+    "Excess Baggage QTY": r.qty,
+    "CN.EBT": r.cash
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, "EBT Report");
+  XLSX.writeFile(wb, "EBT_Report.xlsx");
+}
+let paxRows = [];
+
+function generatePAXReport(){
+  const from = document.getElementById("paxFromDate").value;
+  const to = document.getElementById("paxToDate").value;
+  const body = document.getElementById("paxReportBody");
+
+  if(!from || !to){
+    alert("Select From and To date");
+    return;
+  }
+
+  if(from > to){
+    alert("From date must be before To date");
+    return;
+  }
+
+  const invoices = getInvoices();
+  paxRows = [];
+  body.innerHTML = "";
+
+  invoices.forEach(inv => {
+    if(!inv || !inv.date) return;
+    if(inv.date < from || inv.date > to) return;
+    if(inv.isReversal) return;
+
+    let pax = 0;
+
+    (inv.services || []).forEach(s => {
+      const serviceName = String(s.service || "").trim();
+      if(serviceName === "CUPPS Service" || serviceName === "DCS Service"){
+        pax += Number(s.qty || 0);
+      }
+    });
+
+    if(pax > 0){
+      paxRows.push({
+        date: inv.date || "",
+        airline: inv.airline || "",
+        flight: inv.flightNo || "",
+        pax: pax
+      });
+    }
+  });
+
+  if(!paxRows.length){
+    body.innerHTML = `
+      <tr>
+        <td colspan="4">No data found</td>
+      </tr>
+    `;
+    return;
+  }
+
+  paxRows.forEach(r => {
+    body.innerHTML += `
+      <tr>
+        <td>${r.date}</td>
+        <td>${r.airline}</td>
+        <td>${r.flight}</td>
+        <td>${r.pax}</td>
+      </tr>
+    `;
+  });
+}
+function exportPAXExcel(){
+
+if(!paxRows.length){
+alert("Generate report first");
+return;
+}
+
+const rows = paxRows.map(r=>({
+Date:r.date,
+Airline:r.airline,
+Flight_No:r.flight,
+PAX:r.pax
+}));
+
+const wb = XLSX.utils.book_new();
+const ws = XLSX.utils.json_to_sheet(rows);
+
+XLSX.utils.book_append_sheet(wb, ws, "PAX Report");
+
+XLSX.writeFile(wb,"PAX_Report.xlsx");
+
+}
+
+
+ function generateAgingReport(){
+  const invoices = getInvoices();
+  const appliedMap = getAppliedTotalsMap();
+  const result = {};
+  const body = document.getElementById("agingReportBody");
+
+  function ensureCompany(company){
+    if(!result[company]){
+      result[company] = {
+        company: company,
+        b0_15: 0,
+        b16_30: 0,
+        b31_45: 0,
+        b46_60: 0,
+        b61_75: 0,
+        b76_90: 0,
+        bover90: 0
+      };
+    }
+  }
+
+  function diffDays(dateStr){
+    const today = new Date();
+    const d = new Date(dateStr + "T00:00:00");
+    return Math.floor((today - d) / (1000 * 60 * 60 * 24));
+  }
+
+  body.innerHTML = "";
+  agingRows = [];
+
+  invoices.forEach(inv => {
+    if(!inv || !inv.date) return;
+    if(inv.isReversal) return;
+    if(inv.reversedByInvoiceNo) return;
+
+    const payment = getInvoicePaymentInfo(inv, appliedMap);
+    const outstanding = Number(payment.outstanding || 0);
+
+    if(outstanding <= 0) return;
+
+    const company = String(inv.airline || "").trim() || "Unknown";
+    const days = diffDays(inv.date);
+
+    ensureCompany(company);
+
+    if(days <= 15) result[company].b0_15 += outstanding;
+    else if(days <= 30) result[company].b16_30 += outstanding;
+    else if(days <= 45) result[company].b31_45 += outstanding;
+    else if(days <= 60) result[company].b46_60 += outstanding;
+    else if(days <= 75) result[company].b61_75 += outstanding;
+    else if(days <= 90) result[company].b76_90 += outstanding;
+    else result[company].bover90 += outstanding;
+  });
+
+  agingRows = Object.values(result);
+
+
+const totalsBox = document.getElementById("agingTotals");
+body.innerHTML = "";
+totalsBox.innerHTML = "";
+
+let total0_15 = 0;
+let total16_30 = 0;
+let total31_45 = 0;
+let total46_60 = 0;
+let total61_75 = 0;
+let total76_90 = 0;
+let totalOver90 = 0;
+
+agingRows.forEach(r => {
+  total0_15 += r.b0_15;
+  total16_30 += r.b16_30;
+  total31_45 += r.b31_45;
+  total46_60 += r.b46_60;
+  total61_75 += r.b61_75;
+  total76_90 += r.b76_90;
+  totalOver90 += r.bover90;
+
+  body.innerHTML += `
+<tr>
+<td>${r.company}</td>
+<td>${r.b0_15.toFixed(2)}</td>
+<td>${r.b16_30.toFixed(2)}</td>
+<td>${r.b31_45.toFixed(2)}</td>
+<td>${r.b46_60.toFixed(2)}</td>
+<td>${r.b61_75.toFixed(2)}</td>
+<td>${r.b76_90.toFixed(2)}</td>
+<td>${r.bover90.toFixed(2)}</td>
+</tr>`;
+});
+
+totalsBox.innerHTML = `
+TOTAL —
+0-15: ${total0_15.toFixed(2)} |
+16-30: ${total16_30.toFixed(2)} |
+31-45: ${total31_45.toFixed(2)} |
+46-60: ${total46_60.toFixed(2)} |
+61-75: ${total61_75.toFixed(2)} |
+76-90: ${total76_90.toFixed(2)} |
+Over 90: ${totalOver90.toFixed(2)}
+`;
+}
+
+function exportAgingExcel(){
+  if(!agingRows.length){
+    alert("Generate report first");
+    return;
+  }
+
+  let total0_15 = 0;
+  let total16_30 = 0;
+  let total31_45 = 0;
+  let total46_60 = 0;
+  let total61_75 = 0;
+  let total76_90 = 0;
+  let totalOver90 = 0;
+
+  const rows = agingRows.map(r => {
+    total0_15 += Number(r.b0_15 || 0);
+    total16_30 += Number(r.b16_30 || 0);
+    total31_45 += Number(r.b31_45 || 0);
+    total46_60 += Number(r.b46_60 || 0);
+    total61_75 += Number(r.b61_75 || 0);
+    total76_90 += Number(r.b76_90 || 0);
+    totalOver90 += Number(r.bover90 || 0);
+
+    return {
+      Company: r.company,
+      "0-15": Number(r.b0_15 || 0).toFixed(2),
+      "16-30": Number(r.b16_30 || 0).toFixed(2),
+      "31-45": Number(r.b31_45 || 0).toFixed(2),
+      "46-60": Number(r.b46_60 || 0).toFixed(2),
+      "61-75": Number(r.b61_75 || 0).toFixed(2),
+      "76-90": Number(r.b76_90 || 0).toFixed(2),
+      "Over 90": Number(r.bover90 || 0).toFixed(2)
+    };
+  });
+
+  rows.push({
+    Company: "TOTAL",
+    "0-15": total0_15.toFixed(2),
+    "16-30": total16_30.toFixed(2),
+    "31-45": total31_45.toFixed(2),
+    "46-60": total46_60.toFixed(2),
+    "61-75": total61_75.toFixed(2),
+    "76-90": total76_90.toFixed(2),
+    "Over 90": totalOver90.toFixed(2)
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, "Aging Report");
+  XLSX.writeFile(wb, "Aging_Report.xlsx");
+}
+let servicesMonthRows = [];
+let servicesMonthColumns = [];
+
+function generateServicesMonthReport(){
+
+  const invoices = getInvoices();
+
+  const monthNames = [
+    "January","February","March","April","May","June",
+    "July","August","September","October","November","December"
+  ];
+
+  const result = {};
+  const serviceSet = new Set();
+
+  monthNames.forEach(m=>{
+    result[m] = {};
+  });
+
+  invoices.forEach(inv=>{
+    if(!inv || !inv.date) return;
+    if(inv.isReversal) return;
+
+    const monthIndex = Number(inv.date.slice(5,7)) - 1;
+    if(monthIndex < 0 || monthIndex > 11) return;
+
+    const monthName = monthNames[monthIndex];
+
+    (inv.services || []).forEach(s=>{
+
+      const serviceName = String(s.service || "").trim();
+      const amount = Number(s.totalAmount || 0);
+
+      if(!serviceName) return;
+
+      serviceSet.add(serviceName);
+
+      if(!result[monthName][serviceName]){
+        result[monthName][serviceName] = 0;
+      }
+
+      result[monthName][serviceName] += amount;
+
+    });
+
+  });
+
+  servicesMonthColumns = Array.from(serviceSet).sort();
+
+  const head = document.getElementById("servicesMonthHead");
+  const body = document.getElementById("servicesMonthBody");
+
+  head.innerHTML = "";
+  body.innerHTML = "";
+
+  if(!servicesMonthColumns.length){
+    body.innerHTML = `
+    <tr>
+      <td>No data</td>
+    </tr>`;
+    return;
+  }
+
+  head.innerHTML = `
+  <tr>
+    <th>Month</th>
+    ${servicesMonthColumns.map(s=>`<th>${s}</th>`).join("")}
+  </tr>
+  `;
+
+  servicesMonthRows = [];
+
+  monthNames.forEach(month=>{
+
+    const row = {Month:month};
+
+    servicesMonthColumns.forEach(service=>{
+      row[service] = Number(result[month][service] || 0);
+    });
+
+    servicesMonthRows.push(row);
+
+    body.innerHTML += `
+    <tr>
+      <td>${month}</td>
+      ${servicesMonthColumns.map(s=>`<td>${Number(row[s]).toFixed(2)}</td>`).join("")}
+    </tr>
+    `;
+
+  });
+
+}
+
+function exportServicesMonthExcel(){
+
+  if(!servicesMonthRows.length){
+    alert("Generate report first");
+    return;
+  }
+
+  const rows = servicesMonthRows.map(r=>{
+    const obj = {Month:r.Month};
+
+    servicesMonthColumns.forEach(service=>{
+      obj[service] = Number(r[service]).toFixed(2);
+    });
+
+    return obj;
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  XLSX.utils.book_append_sheet(wb, ws, "Services by Month");
+
+  XLSX.writeFile(wb,"Services_By_Month_Report.xlsx");
+
+}
+window.onload = function(){
+  showAdminTools();
+  loadCompanies();
+};
+</script>
+</body>
+</html>
